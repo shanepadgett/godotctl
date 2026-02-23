@@ -14,3 +14,50 @@ export_credentials.cfg
 .mono/
 data_*/
 mono_crash.*.json
+
+# Godot build outputs
+build/
+*.pck
+*.zip
+
+# Windows specific ignores
+*.exe
+*.dll
+*.dll.mdb
+*.pdb
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.tmp
+*.log
+*.user
+*.userprefs
+*.suo
+*.sln.docstates
+*.vcxproj.user
+
+# Go specific ignores
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+vendor/
+go.sum
+go.work
+
+# Binaries
+/bin/
+/dist/
+
+# IDE
+.idea/
+#.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
