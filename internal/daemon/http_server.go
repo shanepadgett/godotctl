@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -24,8 +25,13 @@ type toolCallRequest struct {
 type toolCallResponse struct {
 	Ok        bool           `json:"ok"`
 	Result    map[string]any `json:"result,omitempty"`
-	Error     string         `json:"error,omitempty"`
+	Error     *toolCallError `json:"error,omitempty"`
 	RequestID string         `json:"request_id,omitempty"`
+}
+
+type toolCallError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 func newHTTPServer(addr string, state *connectionState, ws *wsServer) *httpServer {
@@ -111,14 +117,12 @@ func (h *httpServer) handleToolCall(w http.ResponseWriter, r *http.Request) {
 
 	var req toolCallRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(toolCallResponse{Ok: false, Error: "invalid request body"})
+		h.writeToolError(w, http.StatusBadRequest, BrokerErrorCodeValidation, "invalid request body", "")
 		return
 	}
 
 	if req.Tool == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		_ = json.NewEncoder(w).Encode(toolCallResponse{Ok: false, Error: "tool is required"})
+		h.writeToolError(w, http.StatusBadRequest, BrokerErrorCodeValidation, "tool is required", "")
 		return
 	}
 
@@ -131,22 +135,58 @@ func (h *httpServer) handleToolCall(w http.ResponseWriter, r *http.Request) {
 		timeout = time.Duration(req.TimeoutMS) * time.Millisecond
 	}
 
-	result, err := h.ws.InvokeTool(req.Tool, req.Args, timeout)
+	result, err := h.ws.InvokeTool(r.Context(), req.Tool, req.Args, timeout)
 	if err != nil {
-		w.WriteHeader(http.StatusBadGateway)
-		_ = json.NewEncoder(w).Encode(toolCallResponse{Ok: false, Error: err.Error()})
+		code, message, requestID := brokerErrorDetails(err)
+		h.writeToolError(w, statusForBrokerError(code), code, message, requestID)
+		return
+	}
+
+	if !result.Ok {
+		message := strings.TrimSpace(result.Error)
+		if message == "" {
+			message = "tool call failed"
+		}
+		h.writeToolError(w, http.StatusBadGateway, BrokerErrorCodeOperationFailed, message, result.ID)
 		return
 	}
 
 	resp := toolCallResponse{
 		Ok:        result.Ok,
 		Result:    result.Result,
-		Error:     result.Error,
 		RequestID: result.ID,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
+}
+
+func (h *httpServer) writeToolError(w http.ResponseWriter, status int, code BrokerErrorCode, message string, requestID string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(toolCallResponse{
+		Ok: false,
+		Error: &toolCallError{
+			Code:    string(code),
+			Message: message,
+		},
+		RequestID: requestID,
+	})
+}
+
+func statusForBrokerError(code BrokerErrorCode) int {
+	switch code {
+	case BrokerErrorCodeValidation:
+		return http.StatusBadRequest
+	case BrokerErrorCodePluginDisconnected:
+		return http.StatusServiceUnavailable
+	case BrokerErrorCodeTimeout:
+		return http.StatusGatewayTimeout
+	case BrokerErrorCodeCancelled:
+		return http.StatusRequestTimeout
+	default:
+		return http.StatusBadGateway
+	}
 }
 
 func contextWithTimeout(timeout time.Duration) (context.Context, context.CancelFunc) {

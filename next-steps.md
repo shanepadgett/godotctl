@@ -10,12 +10,12 @@
   - Add a daemon endpoint or status payload field that returns available tool names.
   - Include plugin connection awareness so output clearly distinguishes connected vs disconnected states.
 
-- [ ] Expand daemon status details to match the plan in `internal/daemon`.
+- [x] Expand daemon status details to match the plan in `internal/daemon`.
   - Extend `/status` to include pending request count and connected-since timestamp.
   - Update state tracking in `internal/daemon/state.go` to store and expose these values.
   - Keep status response shape stable for both human and JSON CLI output.
 
-- [ ] Harden request broker behavior in `internal/daemon/ws_server.go` and `internal/daemon/http_server.go`.
+- [x] Harden request broker behavior in `internal/daemon/ws_server.go` and `internal/daemon/http_server.go`.
   - Normalize timeout handling so HTTP and WebSocket errors map to clear operation failures.
   - Ensure cancelled/expired requests are removed from pending state consistently.
   - Return structured error messages that the CLI can map to the correct exit code.

@@ -14,3 +14,7 @@ When updating plugin code:
 Do not use symlinks for the sample plugin copy; use a real folder copy.
 
 > **IMPORTANT**: When running commands for this repo, always use Bash, NEVER PowerShell.
+
+## Planning
+
+- Whenevr you are planning a new feature or enhancement, focus only on what is necessary, not fancy. Keep work simple and in scope.

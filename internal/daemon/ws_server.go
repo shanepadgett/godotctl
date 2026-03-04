@@ -1,6 +1,7 @@
 package daemon
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -76,19 +77,16 @@ func newWSServer(addr string, state *connectionState) *wsServer {
 	return s
 }
 
-func (s *wsServer) InvokeTool(tool string, args map[string]any, timeout time.Duration) (toolResultMessage, error) {
+func (s *wsServer) InvokeTool(ctx context.Context, tool string, args map[string]any, timeout time.Duration) (toolResultMessage, error) {
 	conn := s.currentConn()
 	if conn == nil {
-		return toolResultMessage{}, fmt.Errorf("plugin is not connected")
+		return toolResultMessage{}, newBrokerError(BrokerErrorCodePluginDisconnected, "plugin is not connected", nil, "")
 	}
 
 	requestID := fmt.Sprintf("req_%d", atomic.AddUint64(&s.requestID, 1))
 	pendingCh := make(chan pendingResult, 1)
 
-	s.pendingMu.Lock()
-	s.pending[requestID] = pendingCh
-	s.state.SetPendingRequests(len(s.pending))
-	s.pendingMu.Unlock()
+	s.addPending(requestID, pendingCh)
 
 	msg := toolInvokeMessage{
 		Type: "tool_invoke",
@@ -98,25 +96,25 @@ func (s *wsServer) InvokeTool(tool string, args map[string]any, timeout time.Dur
 	}
 
 	if err := s.writeJSON(conn, msg); err != nil {
-		s.pendingMu.Lock()
-		delete(s.pending, requestID)
-		s.state.SetPendingRequests(len(s.pending))
-		s.pendingMu.Unlock()
-		return toolResultMessage{}, fmt.Errorf("send tool invoke: %w", err)
+		s.removePending(requestID)
+		return toolResultMessage{}, newBrokerError(BrokerErrorCodeOperationFailed, "send tool invoke", err, requestID)
 	}
+
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
 
 	select {
 	case result := <-pendingCh:
 		if result.err != nil {
-			return toolResultMessage{}, result.err
+			return toolResultMessage{}, wrapPendingError(result.err, requestID)
 		}
 		return result.result, nil
-	case <-time.After(timeout):
-		s.pendingMu.Lock()
-		delete(s.pending, requestID)
-		s.state.SetPendingRequests(len(s.pending))
-		s.pendingMu.Unlock()
-		return toolResultMessage{}, fmt.Errorf("tool request timed out")
+	case <-timer.C:
+		s.removePending(requestID)
+		return toolResultMessage{}, newBrokerError(BrokerErrorCodeTimeout, "tool request timed out", nil, requestID)
+	case <-ctx.Done():
+		s.removePending(requestID)
+		return toolResultMessage{}, newBrokerError(BrokerErrorCodeCancelled, "tool request cancelled", ctx.Err(), requestID)
 	}
 }
 
@@ -140,7 +138,7 @@ func (s *wsServer) Shutdown() {
 		s.conn = nil
 	}
 	s.state.SetDisconnected()
-	s.failAllPending(fmt.Errorf("daemon shutting down"))
+	s.failAllPending(newBrokerError(BrokerErrorCodeOperationFailed, "daemon shutting down", nil, ""))
 }
 
 func (s *wsServer) handleWS(w http.ResponseWriter, r *http.Request) {
@@ -242,7 +240,7 @@ func (s *wsServer) clearActiveConn(conn *websocket.Conn) {
 	if s.conn == conn {
 		s.conn = nil
 		s.state.SetDisconnected()
-		s.failAllPending(fmt.Errorf("plugin disconnected"))
+		s.failAllPending(newBrokerError(BrokerErrorCodePluginDisconnected, "plugin disconnected", nil, ""))
 	}
 }
 
@@ -259,17 +257,47 @@ func (s *wsServer) writeJSON(conn *websocket.Conn, v any) error {
 }
 
 func (s *wsServer) completePending(msg toolResultMessage) {
-	s.pendingMu.Lock()
-	ch, ok := s.pending[msg.ID]
-	if ok {
-		delete(s.pending, msg.ID)
-		s.state.SetPendingRequests(len(s.pending))
-	}
-	s.pendingMu.Unlock()
-
+	ch, ok := s.removePending(msg.ID)
 	if ok {
 		ch <- pendingResult{result: msg}
 	}
+}
+
+func (s *wsServer) addPending(requestID string, ch chan pendingResult) {
+	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
+
+	s.pending[requestID] = ch
+	s.state.SetPendingRequests(len(s.pending))
+}
+
+func (s *wsServer) removePending(requestID string) (chan pendingResult, bool) {
+	s.pendingMu.Lock()
+	defer s.pendingMu.Unlock()
+
+	ch, ok := s.pending[requestID]
+	if ok {
+		delete(s.pending, requestID)
+		s.state.SetPendingRequests(len(s.pending))
+	}
+
+	return ch, ok
+}
+
+func wrapPendingError(err error, requestID string) error {
+	if err == nil {
+		return newBrokerError(BrokerErrorCodeOperationFailed, "tool request failed", nil, requestID)
+	}
+
+	var brokerErr *BrokerError
+	if errors.As(err, &brokerErr) {
+		if brokerErr.RequestID == "" {
+			brokerErr.RequestID = requestID
+		}
+		return brokerErr
+	}
+
+	return newBrokerError(BrokerErrorCodeOperationFailed, "tool request failed", err, requestID)
 }
 
 func (s *wsServer) failAllPending(err error) {

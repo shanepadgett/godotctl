@@ -28,8 +28,13 @@ type ToolCallRequest struct {
 type ToolCallResponse struct {
 	OK        bool           `json:"ok"`
 	Result    map[string]any `json:"result,omitempty"`
-	Error     string         `json:"error,omitempty"`
+	Error     *ToolCallError `json:"error,omitempty"`
 	RequestID string         `json:"request_id,omitempty"`
+}
+
+type ToolCallError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 func New(baseAddr string) *DaemonClient {
@@ -180,10 +185,25 @@ func (c *DaemonClient) CallTool(ctx context.Context, req ToolCallRequest) (ToolC
 	return toolResp, nil
 }
 
-func classifyToolError(message string, fallback string) error {
-	msg := strings.TrimSpace(message)
+func classifyToolError(toolErr *ToolCallError, fallback string) error {
+	msg := ""
+	code := ""
+	if toolErr != nil {
+		msg = strings.TrimSpace(toolErr.Message)
+		code = strings.TrimSpace(toolErr.Code)
+	}
+
 	if msg == "" {
 		msg = fallback
+	}
+
+	switch code {
+	case string(daemon.BrokerErrorCodeValidation):
+		return clierrors.New(clierrors.KindValidation, msg)
+	case string(daemon.BrokerErrorCodePluginDisconnected):
+		return clierrors.New(clierrors.KindPluginDisconnected, msg)
+	case string(daemon.BrokerErrorCodeTimeout), string(daemon.BrokerErrorCodeCancelled), string(daemon.BrokerErrorCodeOperationFailed):
+		return clierrors.New(clierrors.KindOperationFailed, msg)
 	}
 
 	lower := strings.ToLower(msg)
