@@ -10,6 +10,7 @@ type StatusResponse struct {
 	Daemon          bool   `json:"daemon"`
 	PluginConnected bool   `json:"plugin_connected"`
 	Project         string `json:"project,omitempty"`
+	OwnerToken      string `json:"owner_token,omitempty"`
 }
 
 type ToolsListResponse struct {
@@ -17,6 +18,7 @@ type ToolsListResponse struct {
 	PluginConnected bool     `json:"plugin_connected"`
 	Project         string   `json:"project,omitempty"`
 	Tools           []string `json:"tools"`
+	OwnerToken      string   `json:"owner_token,omitempty"`
 }
 
 type connectionState struct {
@@ -24,11 +26,12 @@ type connectionState struct {
 	pluginConnected bool
 	project         string
 	tools           []string
+	ownerToken      string
 	stopFn          context.CancelFunc
 }
 
-func newConnectionState() *connectionState {
-	return &connectionState{}
+func newConnectionState(ownerToken string) *connectionState {
+	return &connectionState{ownerToken: ownerToken}
 }
 
 func (s *connectionState) SetConnected(project string, tools []string) {
@@ -55,6 +58,7 @@ func (s *connectionState) Snapshot() StatusResponse {
 		Daemon:          true,
 		PluginConnected: s.pluginConnected,
 		Project:         s.project,
+		OwnerToken:      s.ownerToken,
 	}
 }
 
@@ -67,7 +71,14 @@ func (s *connectionState) ToolsSnapshot() ToolsListResponse {
 		PluginConnected: s.pluginConnected,
 		Project:         s.project,
 		Tools:           cloneStrings(s.tools),
+		OwnerToken:      s.ownerToken,
 	}
+}
+
+func (s *connectionState) OwnerToken() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.ownerToken
 }
 
 func (s *connectionState) SetStopFunc(stopFn context.CancelFunc) {

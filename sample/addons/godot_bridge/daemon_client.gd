@@ -7,6 +7,7 @@ const DAEMON_URL := "ws://127.0.0.1:6505/ws"
 const RECONNECT_DELAY_MIN_MSEC := 2000
 const RECONNECT_DELAY_MAX_MSEC := 30000
 const AUTO_START_COOLDOWN_MSEC := 15000
+const CONNECT_WATCHDOG_MSEC := 300
 
 var _socket := WebSocketPeer.new()
 var _hello_sent := false
@@ -17,6 +18,10 @@ var _retry_delay_msec := RECONNECT_DELAY_MIN_MSEC
 var _connect_attempt_count := 0
 var _next_auto_start_at_msec := 0
 var _auto_start_enabled := true
+var _owner_token := ""
+var _owns_daemon := false
+var _connect_started_at_msec := 0
+var _auto_start_attempted_this_connect := false
 
 
 func start(auto_start_enabled: bool = true) -> void:
@@ -29,6 +34,7 @@ func start(auto_start_enabled: bool = true) -> void:
 
 func stop() -> void:
 	print("godot_bridge: daemon client stopping")
+	_maybe_stop_owned_daemon()
 	set_process(false)
 	if _socket.get_ready_state() != WebSocketPeer.STATE_CLOSED:
 		_socket.close()
@@ -36,6 +42,9 @@ func stop() -> void:
 	_connecting = false
 	_connect_attempt_count = 0
 	_retry_delay_msec = RECONNECT_DELAY_MIN_MSEC
+	_owns_daemon = false
+	_connect_started_at_msec = 0
+	_auto_start_attempted_this_connect = false
 
 
 func _process(_delta: float) -> void:
@@ -43,6 +52,8 @@ func _process(_delta: float) -> void:
 		_socket.poll()
 
 	match _socket.get_ready_state():
+		WebSocketPeer.STATE_CONNECTING:
+			_maybe_watchdog_start_daemon()
 		WebSocketPeer.STATE_OPEN:
 			if not _hello_sent:
 				_send_hello()
@@ -62,6 +73,8 @@ func _connect() -> void:
 	_connecting = true
 	_hello_sent = false
 	_connect_attempt_count += 1
+	_connect_started_at_msec = Time.get_ticks_msec()
+	_auto_start_attempted_this_connect = false
 	if _connect_attempt_count == 1 or _connect_attempt_count % 5 == 0:
 		print("godot_bridge: attempting daemon connection (attempt %d)" % _connect_attempt_count)
 
@@ -88,7 +101,7 @@ func _read_messages() -> void:
 			continue
 
 		if data.get("type", "") == "welcome":
-			_on_connected()
+			_on_connected(data)
 			connected_to_daemon.emit(_project_name)
 		elif data.get("type", "") == "tool_invoke":
 			_handle_tool_invoke(data)
@@ -124,10 +137,15 @@ func _send_tool_result(request_id: String, ok: bool, result: Dictionary, error_m
 	_socket.send_text(JSON.stringify(payload))
 
 
-func _on_connected() -> void:
+func _on_connected(data: Dictionary) -> void:
 	_connect_attempt_count = 0
 	_retry_delay_msec = RECONNECT_DELAY_MIN_MSEC
 	_next_retry_at_msec = 0
+
+	var daemon_owner_token := str(data.get("owner_token", ""))
+	_owns_daemon = not _owner_token.is_empty() and _owner_token == daemon_owner_token
+	if _owns_daemon:
+		print("godot_bridge: daemon ownership confirmed")
 
 
 func _on_connect_failed(reason: String) -> void:
@@ -138,7 +156,9 @@ func _on_connect_failed(reason: String) -> void:
 	if _connect_attempt_count == 1 or _connect_attempt_count % 5 == 0:
 		push_warning("godot_bridge: daemon unavailable (%s)" % reason)
 
-	_maybe_start_daemon()
+	if not _auto_start_attempted_this_connect:
+		_auto_start_attempted_this_connect = true
+		_maybe_start_daemon()
 
 
 func _maybe_start_daemon() -> void:
@@ -151,8 +171,13 @@ func _maybe_start_daemon() -> void:
 
 	_next_auto_start_at_msec = now + AUTO_START_COOLDOWN_MSEC
 
+	if _owner_token.is_empty():
+		_owner_token = _generate_owner_token()
+
+	var args := ["daemon", "start", "--owner-token", _owner_token]
+
 	for executable in _daemon_candidates():
-		var pid := OS.create_process(executable, ["daemon", "start"], false)
+		var pid := OS.create_process(executable, args, false)
 		if pid != -1:
 			print("godot_bridge: launched daemon via %s (pid=%d)" % [executable, pid])
 			return
@@ -161,6 +186,39 @@ func _maybe_start_daemon() -> void:
 		push_warning("godot_bridge: could not launch daemon automatically")
 
 
+func _maybe_watchdog_start_daemon() -> void:
+	if _auto_start_attempted_this_connect:
+		return
+
+	if Time.get_ticks_msec() - _connect_started_at_msec < CONNECT_WATCHDOG_MSEC:
+		return
+
+	_auto_start_attempted_this_connect = true
+	_maybe_start_daemon()
+
+
 func _daemon_candidates() -> Array[String]:
 	var plugin_binary := ProjectSettings.globalize_path("res://addons/godot_bridge/bin/godotctl.exe")
 	return [plugin_binary, "godotctl.exe", "godotctl"]
+
+
+func _maybe_stop_owned_daemon() -> void:
+	if not _owns_daemon:
+		return
+	if _owner_token.is_empty():
+		return
+
+	var args := ["daemon", "stop", "--owner-token", _owner_token]
+	for executable in _daemon_candidates():
+		var pid := OS.create_process(executable, args, false)
+		if pid != -1:
+			print("godot_bridge: requested daemon stop via %s (pid=%d)" % [executable, pid])
+			return
+
+	push_warning("godot_bridge: could not request owned daemon stop")
+
+
+func _generate_owner_token() -> String:
+	var time_part := Time.get_unix_time_from_system()
+	var tick_part := Time.get_ticks_usec()
+	return "%s-%s" % [str(time_part), str(tick_part)]

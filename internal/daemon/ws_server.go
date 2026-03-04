@@ -29,9 +29,10 @@ type wsServer struct {
 }
 
 type wsMessage struct {
-	Type    string   `json:"type"`
-	Project string   `json:"project,omitempty"`
-	Tools   []string `json:"tools,omitempty"`
+	Type       string   `json:"type"`
+	Project    string   `json:"project,omitempty"`
+	Tools      []string `json:"tools,omitempty"`
+	OwnerToken string   `json:"owner_token,omitempty"`
 }
 
 type toolInvokeMessage struct {
@@ -181,7 +182,7 @@ func (s *wsServer) handleWS(w http.ResponseWriter, r *http.Request) {
 			}
 			s.state.SetConnected(msg.Project, normalizeTools(msg.Tools))
 			log.Printf("plugin connected (project=%s)", msg.Project)
-			_ = s.writeJSON(conn, wsMessage{Type: "welcome"})
+			_ = s.writeJSON(conn, wsMessage{Type: "welcome", OwnerToken: s.state.OwnerToken()})
 		case "ping":
 			_ = s.writeJSON(conn, wsMessage{Type: "pong"})
 		case "tool_result":

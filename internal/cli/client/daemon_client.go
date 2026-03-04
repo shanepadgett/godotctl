@@ -5,8 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -87,8 +87,13 @@ func (c *DaemonClient) GetToolsList(ctx context.Context) (daemon.ToolsListRespon
 	return tools, nil
 }
 
-func (c *DaemonClient) Stop(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/daemon/stop", nil)
+func (c *DaemonClient) Stop(ctx context.Context, ownerToken string) (string, error) {
+	stopURL := c.baseURL + "/daemon/stop"
+	if ownerToken != "" {
+		stopURL += "?owner_token=" + url.QueryEscape(ownerToken)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, stopURL, nil)
 	if err != nil {
 		return "", clierrors.Wrap(clierrors.KindValidation, "build daemon stop request", err)
 	}
@@ -99,19 +104,33 @@ func (c *DaemonClient) Stop(ctx context.Context) (string, error) {
 	}
 	defer resp.Body.Close()
 
+	var stopResp struct {
+		Ok      bool   `json:"ok"`
+		Stopped bool   `json:"stopped"`
+		Message string `json:"message"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&stopResp); err != nil {
+		return "", clierrors.Wrap(clierrors.KindOperationFailed, "decode daemon stop response", err)
+	}
+
 	if resp.StatusCode >= http.StatusBadRequest {
-		body, readErr := io.ReadAll(resp.Body)
-		if readErr != nil {
-			return "", clierrors.Wrap(clierrors.KindOperationFailed, "daemon stop failed", readErr)
-		}
-		message := strings.TrimSpace(string(body))
+		message := strings.TrimSpace(stopResp.Message)
 		if message == "" {
 			message = resp.Status
 		}
 		return "", clierrors.New(clierrors.KindOperationFailed, "daemon stop failed: "+message)
 	}
 
-	return "daemon stopping", nil
+	if stopResp.Message != "" {
+		return stopResp.Message, nil
+	}
+
+	if stopResp.Stopped {
+		return "daemon stopping", nil
+	}
+
+	return "daemon not stopped", nil
 }
 
 func (c *DaemonClient) CallTool(ctx context.Context, req ToolCallRequest) (ToolCallResponse, error) {

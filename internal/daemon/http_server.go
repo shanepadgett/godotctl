@@ -85,9 +85,22 @@ func (h *httpServer) handleStop(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.state.Stop()
+	ownerToken := r.URL.Query().Get("owner_token")
+	stopped := true
+	message := "daemon stopping"
+	if ownerToken != "" {
+		if h.state.OwnerToken() == ownerToken {
+			h.state.Stop()
+		} else {
+			stopped = false
+			message = "daemon not stopped: owner token mismatch"
+		}
+	} else {
+		h.state.Stop()
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "daemon stopping"})
+	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true, "stopped": stopped, "message": message})
 }
 
 func (h *httpServer) handleToolCall(w http.ResponseWriter, r *http.Request) {

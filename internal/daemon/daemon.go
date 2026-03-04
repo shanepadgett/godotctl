@@ -13,8 +13,8 @@ type Daemon struct {
 	once       sync.Once
 }
 
-func New(wsAddr string, httpAddr string) *Daemon {
-	state := newConnectionState()
+func New(wsAddr string, httpAddr string, ownerToken string) *Daemon {
+	state := newConnectionState(ownerToken)
 	ws := newWSServer(wsAddr, state)
 	return &Daemon{
 		wsServer:   ws,
