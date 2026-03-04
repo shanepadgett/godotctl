@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/shanepadgett/godotctl/internal/cli/client"
 	"github.com/shanepadgett/godotctl/internal/cli/output"
@@ -13,6 +14,37 @@ func (a *App) newToolsCommand() *cobra.Command {
 		Use:   "tools",
 		Short: "Invoke plugin tools through the daemon",
 	}
+
+	toolsCmd.AddCommand(&cobra.Command{
+		Use:   "list",
+		Short: "List available plugin tools",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			tools, err := a.client.GetToolsList(cmd.Context())
+			if err != nil {
+				return a.fail(cmd, err)
+			}
+
+			text := "tools unavailable: plugin disconnected"
+			if tools.PluginConnected {
+				names := "none"
+				if len(tools.Tools) > 0 {
+					names = strings.Join(tools.Tools, ", ")
+				}
+
+				if tools.Project != "" {
+					text = fmt.Sprintf("tools available (project=%s): %s", tools.Project, names)
+				} else {
+					text = fmt.Sprintf("tools available: %s", names)
+				}
+			}
+
+			return a.presenter.Success(output.Result{
+				Command: cmd.CommandPath(),
+				Text:    text,
+				Data:    tools,
+			})
+		},
+	})
 
 	toolsCmd.AddCommand(&cobra.Command{
 		Use:   "ping",

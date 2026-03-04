@@ -5,7 +5,7 @@
   - Standardize command responses so each command can print either concise text or JSON.
   - Return the planned exit codes (`0` success, `1` validation error, `2` daemon unavailable, `3` plugin disconnected, `4` operation failed).
 
-- [ ] Add `godotctl tools list` and daemon-backed tool capability reporting.
+- [x] Add `godotctl tools list` and daemon-backed tool capability reporting.
   - Implement a `tools list` CLI command in `cmd/godotctl/main.go`.
   - Add a daemon endpoint or status payload field that returns available tool names.
   - Include plugin connection awareness so output clearly distinguishes connected vs disconnected states.

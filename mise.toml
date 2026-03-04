@@ -2,3 +2,51 @@
 go = "1.25.6"
 golangci-lint = "latest"
 "go:golang.org/x/tools/cmd/deadcode" = "latest"
+
+[env]
+_.file = ".env"
+
+[tasks.build]
+description = "Build CLI and copy into addon bin"
+shell = "bash -lc"
+run = "mkdir -p bin addons/godot_bridge/bin && go build -o bin/godotctl.exe ./cmd/godotctl && cp bin/godotctl.exe addons/godot_bridge/bin/godotctl.exe"
+
+[tasks.cli]
+description = "Run godotctl via go run (pass args after --)"
+run = "go run ./cmd/godotctl"
+
+[tasks.copy-addon]
+description = "Copy addon into sample project"
+shell = "bash -lc"
+run = "rm -rf sample/addons/godot_bridge && mkdir -p sample/addons && cp -R addons/godot_bridge sample/addons/"
+
+[tasks.launch-sample]
+description = "Build, copy addon, and launch sample in Godot 4.6"
+depends = ["build", "copy-addon"]
+shell = "bash -lc"
+run = '''if [ -z "${GODOT46_EXE:-}" ]; then printf "Set GODOT46_EXE to your Godot 4.6 executable path.\n"; exit 1; fi
+exe="$GODOT46_EXE"
+if command -v cygpath >/dev/null 2>&1; then
+  exe="$(cygpath -u "$exe" 2>/dev/null || printf %s "$exe")"
+fi
+if [ ! -f "$exe" ]; then
+  printf "GODOT46_EXE does not point to a file: %s\n" "$exe"
+  exit 1
+fi
+"$exe" --editor --path sample'''
+
+[tasks.launch-sample-detached]
+description = "Build, copy addon, and launch sample detached"
+depends = ["build", "copy-addon"]
+shell = "bash -lc"
+run = '''if [ -z "${GODOT46_EXE:-}" ]; then printf "Set GODOT46_EXE to your Godot 4.6 executable path.\n"; exit 1; fi
+exe="$GODOT46_EXE"
+if command -v cygpath >/dev/null 2>&1; then
+  exe="$(cygpath -u "$exe" 2>/dev/null || printf %s "$exe")"
+fi
+if [ ! -f "$exe" ]; then
+  printf "GODOT46_EXE does not point to a file: %s\n" "$exe"
+  exit 1
+fi
+"$exe" --editor --path sample >/dev/null 2>&1 &
+printf "launched Godot in background (pid=%s)\n" "$!"'''

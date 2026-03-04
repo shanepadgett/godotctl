@@ -63,6 +63,30 @@ func (c *DaemonClient) GetStatus(ctx context.Context) (daemon.StatusResponse, er
 	return status, nil
 }
 
+func (c *DaemonClient) GetToolsList(ctx context.Context) (daemon.ToolsListResponse, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.baseURL+"/tools/list", nil)
+	if err != nil {
+		return daemon.ToolsListResponse{}, clierrors.Wrap(clierrors.KindValidation, "build tools list request", err)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return daemon.ToolsListResponse{}, clierrors.Wrap(clierrors.KindDaemonUnavailable, "daemon is unavailable", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= http.StatusBadRequest {
+		return daemon.ToolsListResponse{}, clierrors.New(clierrors.KindOperationFailed, fmt.Sprintf("tools list request failed: %s", resp.Status))
+	}
+
+	var tools daemon.ToolsListResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tools); err != nil {
+		return daemon.ToolsListResponse{}, clierrors.Wrap(clierrors.KindOperationFailed, "decode tools list response", err)
+	}
+
+	return tools, nil
+}
+
 func (c *DaemonClient) Stop(ctx context.Context) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.baseURL+"/daemon/stop", nil)
 	if err != nil {

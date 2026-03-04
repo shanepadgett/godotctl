@@ -33,6 +33,7 @@ func newHTTPServer(addr string, state *connectionState, ws *wsServer) *httpServe
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/status", h.handleStatus)
+	mux.HandleFunc("/tools/list", h.handleToolsList)
 	mux.HandleFunc("/daemon/stop", h.handleStop)
 	mux.HandleFunc("/tools/call", h.handleToolCall)
 
@@ -66,6 +67,16 @@ func (h *httpServer) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(h.state.Snapshot())
+}
+
+func (h *httpServer) handleToolsList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(h.state.ToolsSnapshot())
 }
 
 func (h *httpServer) handleStop(w http.ResponseWriter, r *http.Request) {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -28,8 +29,9 @@ type wsServer struct {
 }
 
 type wsMessage struct {
-	Type    string `json:"type"`
-	Project string `json:"project,omitempty"`
+	Type    string   `json:"type"`
+	Project string   `json:"project,omitempty"`
+	Tools   []string `json:"tools,omitempty"`
 }
 
 type toolInvokeMessage struct {
@@ -177,7 +179,7 @@ func (s *wsServer) handleWS(w http.ResponseWriter, r *http.Request) {
 			if err := json.Unmarshal(payload, &msg); err != nil {
 				continue
 			}
-			s.state.SetConnected(msg.Project)
+			s.state.SetConnected(msg.Project, normalizeTools(msg.Tools))
 			log.Printf("plugin connected (project=%s)", msg.Project)
 			_ = s.writeJSON(conn, wsMessage{Type: "welcome"})
 		case "ping":
@@ -191,6 +193,32 @@ func (s *wsServer) handleWS(w http.ResponseWriter, r *http.Request) {
 			s.completePending(msg)
 		}
 	}
+}
+
+func normalizeTools(tools []string) []string {
+	if len(tools) == 0 {
+		return []string{"ping"}
+	}
+
+	normalized := make([]string, 0, len(tools))
+	seen := make(map[string]struct{}, len(tools))
+	for _, tool := range tools {
+		name := strings.TrimSpace(tool)
+		if name == "" {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		normalized = append(normalized, name)
+	}
+
+	if len(normalized) == 0 {
+		return []string{"ping"}
+	}
+
+	return normalized
 }
 
 func (s *wsServer) setActiveConn(conn *websocket.Conn) {

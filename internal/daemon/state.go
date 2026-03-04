@@ -12,10 +12,18 @@ type StatusResponse struct {
 	Project         string `json:"project,omitempty"`
 }
 
+type ToolsListResponse struct {
+	Daemon          bool     `json:"daemon"`
+	PluginConnected bool     `json:"plugin_connected"`
+	Project         string   `json:"project,omitempty"`
+	Tools           []string `json:"tools"`
+}
+
 type connectionState struct {
 	mu              sync.RWMutex
 	pluginConnected bool
 	project         string
+	tools           []string
 	stopFn          context.CancelFunc
 }
 
@@ -23,11 +31,12 @@ func newConnectionState() *connectionState {
 	return &connectionState{}
 }
 
-func (s *connectionState) SetConnected(project string) {
+func (s *connectionState) SetConnected(project string, tools []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.pluginConnected = true
 	s.project = project
+	s.tools = cloneStrings(tools)
 }
 
 func (s *connectionState) SetDisconnected() {
@@ -35,6 +44,7 @@ func (s *connectionState) SetDisconnected() {
 	defer s.mu.Unlock()
 	s.pluginConnected = false
 	s.project = ""
+	s.tools = nil
 }
 
 func (s *connectionState) Snapshot() StatusResponse {
@@ -45,6 +55,18 @@ func (s *connectionState) Snapshot() StatusResponse {
 		Daemon:          true,
 		PluginConnected: s.pluginConnected,
 		Project:         s.project,
+	}
+}
+
+func (s *connectionState) ToolsSnapshot() ToolsListResponse {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	return ToolsListResponse{
+		Daemon:          true,
+		PluginConnected: s.pluginConnected,
+		Project:         s.project,
+		Tools:           cloneStrings(s.tools),
 	}
 }
 
@@ -66,4 +88,14 @@ func (s *connectionState) Stop() {
 
 func shutdownTimeout() time.Duration {
 	return 5 * time.Second
+}
+
+func cloneStrings(items []string) []string {
+	if len(items) == 0 {
+		return []string{}
+	}
+
+	cloned := make([]string, len(items))
+	copy(cloned, items)
+	return cloned
 }
