@@ -7,10 +7,12 @@ import (
 )
 
 type StatusResponse struct {
-	Daemon          bool   `json:"daemon"`
-	PluginConnected bool   `json:"plugin_connected"`
-	Project         string `json:"project,omitempty"`
-	OwnerToken      string `json:"owner_token,omitempty"`
+	Daemon          bool    `json:"daemon"`
+	PluginConnected bool    `json:"plugin_connected"`
+	Project         string  `json:"project,omitempty"`
+	PendingRequests int     `json:"pending_requests"`
+	ConnectedSince  *string `json:"connected_since"`
+	OwnerToken      string  `json:"owner_token,omitempty"`
 }
 
 type ToolsListResponse struct {
@@ -26,6 +28,8 @@ type connectionState struct {
 	pluginConnected bool
 	project         string
 	tools           []string
+	pendingRequests int
+	connectedSince  *time.Time
 	ownerToken      string
 	stopFn          context.CancelFunc
 }
@@ -37,6 +41,10 @@ func newConnectionState(ownerToken string) *connectionState {
 func (s *connectionState) SetConnected(project string, tools []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if !s.pluginConnected {
+		now := time.Now().UTC()
+		s.connectedSince = &now
+	}
 	s.pluginConnected = true
 	s.project = project
 	s.tools = cloneStrings(tools)
@@ -48,16 +56,36 @@ func (s *connectionState) SetDisconnected() {
 	s.pluginConnected = false
 	s.project = ""
 	s.tools = nil
+	s.pendingRequests = 0
+	s.connectedSince = nil
+}
+
+func (s *connectionState) SetPendingRequests(n int) {
+	if n < 0 {
+		n = 0
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.pendingRequests = n
 }
 
 func (s *connectionState) Snapshot() StatusResponse {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	var connectedSince *string
+	if s.connectedSince != nil {
+		formatted := s.connectedSince.Format(time.RFC3339)
+		connectedSince = &formatted
+	}
+
 	return StatusResponse{
 		Daemon:          true,
 		PluginConnected: s.pluginConnected,
 		Project:         s.project,
+		PendingRequests: s.pendingRequests,
+		ConnectedSince:  connectedSince,
 		OwnerToken:      s.ownerToken,
 	}
 }

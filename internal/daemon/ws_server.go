@@ -87,6 +87,7 @@ func (s *wsServer) InvokeTool(tool string, args map[string]any, timeout time.Dur
 
 	s.pendingMu.Lock()
 	s.pending[requestID] = pendingCh
+	s.state.SetPendingRequests(len(s.pending))
 	s.pendingMu.Unlock()
 
 	msg := toolInvokeMessage{
@@ -99,6 +100,7 @@ func (s *wsServer) InvokeTool(tool string, args map[string]any, timeout time.Dur
 	if err := s.writeJSON(conn, msg); err != nil {
 		s.pendingMu.Lock()
 		delete(s.pending, requestID)
+		s.state.SetPendingRequests(len(s.pending))
 		s.pendingMu.Unlock()
 		return toolResultMessage{}, fmt.Errorf("send tool invoke: %w", err)
 	}
@@ -112,6 +114,7 @@ func (s *wsServer) InvokeTool(tool string, args map[string]any, timeout time.Dur
 	case <-time.After(timeout):
 		s.pendingMu.Lock()
 		delete(s.pending, requestID)
+		s.state.SetPendingRequests(len(s.pending))
 		s.pendingMu.Unlock()
 		return toolResultMessage{}, fmt.Errorf("tool request timed out")
 	}
@@ -260,6 +263,7 @@ func (s *wsServer) completePending(msg toolResultMessage) {
 	ch, ok := s.pending[msg.ID]
 	if ok {
 		delete(s.pending, msg.ID)
+		s.state.SetPendingRequests(len(s.pending))
 	}
 	s.pendingMu.Unlock()
 
@@ -276,4 +280,5 @@ func (s *wsServer) failAllPending(err error) {
 		delete(s.pending, id)
 		ch <- pendingResult{err: err}
 	}
+	s.state.SetPendingRequests(0)
 }
