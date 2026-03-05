@@ -96,10 +96,14 @@ func sort_strings(values: Array[String]) -> Array[String]:
 	return sorted
 
 
-func validate_node_class(node_class_name: String) -> Dictionary:
+func validate_node_class(node_class_name: String, field_name: String = "node_class") -> Dictionary:
+	var normalized_field := str(field_name).strip_edges()
+	if normalized_field.is_empty():
+		normalized_field = "node_class"
+
 	var normalized_class := str(node_class_name).strip_edges()
 	if normalized_class.is_empty():
-		return make_error(ERROR_INVALID_ARGS, "root_type is required")
+		return make_error(ERROR_INVALID_ARGS, "%s is required" % normalized_field)
 	if not ClassDB.class_exists(normalized_class):
 		return make_error(ERROR_NOT_FOUND, "class does not exist: %s" % normalized_class)
 
