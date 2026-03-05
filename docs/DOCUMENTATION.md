@@ -113,6 +113,54 @@ Use project-relative paths for command flags that take a project path (for examp
 - Example:
   - `godotctl scene tree --scene scenes/player.tscn`
 
+### `godotctl script create`
+
+- What it does:
+  - Creates a `.gd` script file from a deterministic template source.
+- Flags:
+  - `--path <path>`: Script path (project-relative `.gd` path).
+  - `--base <BaseClass>`: Base class used in `extends`.
+  - `--class-name <Name>`: Optional `class_name` declaration.
+  - `--overwrite`: Overwrite target script if it already exists.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl script create --path scripts/player.gd --base CharacterBody2D`
+
+### `godotctl script edit`
+
+- What it does:
+  - Reads a script file, performs literal replace-all, and writes the result.
+- Flags:
+  - `--path <path>`: Script path (project-relative `.gd` path).
+  - `--find <text>`: Literal text to search for.
+  - `--replace <text>`: Replacement text (can be empty).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl script edit --path scripts/player.gd --find pass --replace 'print("ready")'`
+
+### `godotctl script validate`
+
+- What it does:
+  - Validates script parse/compile state and returns `valid` plus diagnostics.
+- Flags:
+  - `--path <path>`: Script path (project-relative `.gd` path).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl script validate --path scripts/player.gd --json`
+
+### `godotctl script attach`
+
+- What it does:
+  - Loads a scene, resolves a node path, attaches a script, and saves the scene.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--node <NodePath>`: Target node path (`.` means root).
+  - `--script <path>`: Script path (project-relative `.gd` path).
+  - `--overwrite`: Replace an existing script already attached on the node.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl script attach --scene scenes/player.tscn --node . --script scripts/player.gd`
+
 ## Exit Codes
 
 - `0`: Success

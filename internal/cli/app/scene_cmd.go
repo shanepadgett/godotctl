@@ -351,3 +351,45 @@ func toolResultDataString(result map[string]any, key string, fallback string) st
 
 	return value
 }
+
+func toolResultDataInt(result map[string]any, key string, fallback int) int {
+	value := fallback
+	if data := toolResultData(result); data != nil {
+		if converted, ok := anyToInt(data[key]); ok {
+			value = converted
+		}
+	}
+
+	return value
+}
+
+func anyToInt(value any) (int, bool) {
+	switch n := value.(type) {
+	case int:
+		return n, true
+	case int8:
+		return int(n), true
+	case int16:
+		return int(n), true
+	case int32:
+		return int(n), true
+	case int64:
+		return int(n), true
+	case uint:
+		return int(n), true
+	case uint8:
+		return int(n), true
+	case uint16:
+		return int(n), true
+	case uint32:
+		return int(n), true
+	case uint64:
+		return int(n), true
+	case float32:
+		return int(n), true
+	case float64:
+		return int(n), true
+	default:
+		return 0, false
+	}
+}

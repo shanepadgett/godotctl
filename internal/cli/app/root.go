@@ -44,6 +44,7 @@ func NewRootCommand(stdout io.Writer, stderr io.Writer) *cobra.Command {
 	rootCmd.AddCommand(a.newStatusCommand())
 	rootCmd.AddCommand(a.newToolsCommand())
 	rootCmd.AddCommand(a.newSceneCommand())
+	rootCmd.AddCommand(a.newScriptCommand())
 
 	return rootCmd
 }

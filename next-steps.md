@@ -79,7 +79,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
 
 ## Milestone D2 - Script Basics
 
-- [ ] Implement `script create` end-to-end.
+- [x] Implement `script create` end-to-end.
   - CLI command:
     - `godotctl script create --path <path>.gd --base <BaseClass> [--class-name <Name>] [--overwrite] [--timeout-ms <ms>]`
   - Tool call:
@@ -91,7 +91,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
     - fail with `ALREADY_EXISTS` if file exists and no overwrite
     - save + filesystem refresh
 
-- [ ] Implement `script edit` end-to-end.
+- [x] Implement `script edit` end-to-end.
   - CLI command:
     - `godotctl script edit --path <path>.gd --find <text> --replace <text> [--timeout-ms <ms>]`
   - Tool call:
@@ -101,7 +101,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
     - read file, do literal replace-all, write file
     - return deterministic counts (`match_count`, `replaced_count`)
 
-- [ ] Implement `script validate` end-to-end.
+- [x] Implement `script validate` end-to-end.
   - CLI command:
     - `godotctl script validate --path <path>.gd [--timeout-ms <ms>]`
   - Tool call:
@@ -111,7 +111,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
     - parse/compile script for syntax validity
     - return `valid` and diagnostics details
 
-- [ ] Implement `script attach` end-to-end.
+- [x] Implement `script attach` end-to-end.
   - CLI command:
     - `godotctl script attach --scene <path>.tscn --node <NodePath> --script <path>.gd [--overwrite] [--timeout-ms <ms>]`
   - Tool call:
@@ -123,7 +123,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
     - if script exists and overwrite is false, return `ALREADY_EXISTS`
     - save + refresh
 
-- [ ] Add `script` command group in CLI.
+- [x] Add `script` command group in CLI.
   - Create `internal/cli/app/script_cmd.go`.
   - Register in `internal/cli/app/root.go`.
 
@@ -202,10 +202,10 @@ This checklist starts after Milestone C completion and covers the remaining basi
 - [x] `bin/godotctl.exe scene set-prop --scene scenes/tools_e2e.tscn --path . --prop position --value '{"type":"Vector2","x":10,"y":20}'`
 - [x] `bin/godotctl.exe scene remove-node --scene scenes/tools_e2e.tscn --path Sprite2D`
 - [x] Repeat previous remove command and confirm deterministic failure (`NOT_FOUND`).
-- [ ] `bin/godotctl.exe script create --path scripts/tools_e2e.gd --base CharacterBody2D`
-- [ ] `bin/godotctl.exe script validate --path scripts/tools_e2e.gd --json`
-- [ ] `bin/godotctl.exe script edit --path scripts/tools_e2e.gd --find "pass" --replace "print(\"ready\")"`
-- [ ] `bin/godotctl.exe script attach --scene scenes/tools_e2e.tscn --node . --script scripts/tools_e2e.gd`
+- [x] `bin/godotctl.exe script create --path scripts/tools_e2e.gd --base CharacterBody2D`
+- [x] `bin/godotctl.exe script validate --path scripts/tools_e2e.gd --json`
+- [x] `bin/godotctl.exe script edit --path scripts/tools_e2e.gd --find "pass" --replace "print(\"ready\")"`
+- [x] `bin/godotctl.exe script attach --scene scenes/tools_e2e.tscn --node . --script scripts/tools_e2e.gd`
 - [ ] `bin/godotctl.exe project settings get --key application/config/name --json`
 - [ ] `bin/godotctl.exe project input-map get --json`
 - [ ] `bin/godotctl.exe file list --path scripts --json`
