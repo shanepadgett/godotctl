@@ -8,6 +8,7 @@ const RECONNECT_DELAY_MIN_MSEC := 2000
 const RECONNECT_DELAY_MAX_MSEC := 30000
 const AUTO_START_COOLDOWN_MSEC := 15000
 const CONNECT_WATCHDOG_MSEC := 300
+const TOOL_EXECUTOR_SCRIPT := preload("res://addons/godot_bridge/tool_executor.gd")
 
 var _socket := WebSocketPeer.new()
 var _hello_sent := false
@@ -22,11 +23,16 @@ var _owner_token := ""
 var _owns_daemon := false
 var _connect_started_at_msec := 0
 var _auto_start_attempted_this_connect := false
+var _tool_executor: RefCounted = TOOL_EXECUTOR_SCRIPT.new()
 
 
 func start(auto_start_enabled: bool = true) -> void:
 	_project_name = str(ProjectSettings.get_setting("application/config/name", ""))
 	_auto_start_enabled = auto_start_enabled
+	if _tool_executor == null:
+		_tool_executor = TOOL_EXECUTOR_SCRIPT.new()
+	if _tool_executor.has_method("set_host"):
+		_tool_executor.call("set_host", self)
 	print("godot_bridge: daemon client starting")
 	set_process(true)
 	_connect()
@@ -84,9 +90,22 @@ func _connect() -> void:
 
 
 func _send_hello() -> void:
+	var tools: Array[String] = []
+	if _tool_executor != null and _tool_executor.has_method("list_tools"):
+		var listed_tools = _tool_executor.call("list_tools")
+		if typeof(listed_tools) == TYPE_ARRAY:
+			for item in listed_tools:
+				if typeof(item) != TYPE_STRING:
+					continue
+				var tool_name := str(item).strip_edges()
+				if tool_name.is_empty():
+					continue
+				tools.append(tool_name)
+
 	var payload := {
 		"type": "hello",
 		"project": _project_name,
+		"tools": tools,
 	}
 	var validation_error := _validate_hello_message(payload)
 	if not validation_error.is_empty():
@@ -128,7 +147,11 @@ func _handle_tool_invoke(data: Dictionary) -> void:
 		push_warning("godot_bridge: invalid tool_invoke payload: %s" % validation_error)
 		var invalid_request_id := str(data.get("id", ""))
 		if not invalid_request_id.is_empty():
-			_send_tool_result(invalid_request_id, false, {}, "invalid tool_invoke: %s" % validation_error)
+			_send_tool_result(invalid_request_id, {
+				"ok": false,
+				"error": "invalid tool_invoke: %s" % validation_error,
+				"error_code": "INVALID_ARGS",
+			})
 		return
 
 	var request_id := str(data.get("id", ""))
@@ -138,18 +161,43 @@ func _handle_tool_invoke(data: Dictionary) -> void:
 	if request_id.is_empty():
 		return
 	if typeof(args) != TYPE_DICTIONARY:
-		_send_tool_result(request_id, false, {}, "invalid tool_invoke: args must be a dictionary")
+		_send_tool_result(request_id, {
+			"ok": false,
+			"error": "invalid tool_invoke: args must be a dictionary",
+			"error_code": "INVALID_ARGS",
+		})
 		return
 
-	if tool == "ping":
-		print("godot_bridge: received tools.ping request")
-		_send_tool_result(request_id, true, {"message": "pong from godot_bridge"}, "")
+	if _tool_executor == null or not _tool_executor.has_method("execute"):
+		_send_tool_result(request_id, {
+			"ok": false,
+			"error": "tool executor unavailable",
+			"error_code": "INTERNAL",
+		})
 		return
 
-	_send_tool_result(request_id, false, {}, "unknown tool: %s" % tool)
+	var execution = _tool_executor.call("execute", tool, args)
+	if typeof(execution) != TYPE_DICTIONARY:
+		_send_tool_result(request_id, {
+			"ok": false,
+			"error": "tool executor returned invalid response",
+			"error_code": "INTERNAL",
+		})
+		return
+
+	_send_tool_result(request_id, execution)
 
 
-func _send_tool_result(request_id: String, ok: bool, result: Dictionary, error_message: String) -> void:
+func _send_tool_result(request_id: String, execution: Dictionary) -> void:
+	var normalized := execution
+	if typeof(normalized.get("ok", null)) != TYPE_BOOL:
+		normalized = {
+			"ok": false,
+			"error": "invalid tool response: ok must be a bool",
+			"error_code": "INTERNAL",
+		}
+
+	var ok := bool(normalized.get("ok", false))
 	var payload := {
 		"type": "tool_result",
 		"id": request_id,
@@ -157,9 +205,15 @@ func _send_tool_result(request_id: String, ok: bool, result: Dictionary, error_m
 	}
 
 	if ok:
-		payload["result"] = result
+		payload["result"] = normalized.get("result", {})
 	else:
+		var error_message := str(normalized.get("error", "tool call failed")).strip_edges()
+		if error_message.is_empty():
+			error_message = "tool call failed"
 		payload["error"] = error_message
+		var error_code := str(normalized.get("error_code", "")).strip_edges()
+		if not error_code.is_empty():
+			payload["error_code"] = error_code
 
 	var validation_error := _validate_tool_result_message(payload)
 	if not validation_error.is_empty():
@@ -214,16 +268,24 @@ func _validate_tool_result_message(data: Dictionary) -> String:
 
 	if typeof(data.get("ok", null)) != TYPE_BOOL:
 		return "ok must be a bool"
+	if data.has("error_code"):
+		if typeof(data.get("error_code")) != TYPE_STRING:
+			return "error_code must be a string"
+		if str(data.get("error_code", "")).strip_edges().is_empty():
+			return "error_code must be non-empty when provided"
 
 	var ok := bool(data.get("ok", false))
 	var has_result := data.has("result") and typeof(data.get("result")) == TYPE_DICTIONARY
 	var has_error := str(data.get("error", "")).strip_edges() != ""
+	var has_error_code := data.has("error_code")
 
 	if ok:
 		if not has_result:
 			return "result is required when ok=true"
 		if has_error:
 			return "error must be empty when ok=true"
+		if has_error_code:
+			return "error_code must be empty when ok=true"
 		return ""
 
 	if not has_error:

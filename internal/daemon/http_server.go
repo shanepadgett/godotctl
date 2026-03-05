@@ -30,8 +30,9 @@ type toolCallResponse struct {
 }
 
 type toolCallError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code     string `json:"code"`
+	Message  string `json:"message"`
+	ToolCode string `json:"tool_code,omitempty"`
 }
 
 func newHTTPServer(addr string, state *connectionState, ws *wsServer) *httpServer {
@@ -117,12 +118,12 @@ func (h *httpServer) handleToolCall(w http.ResponseWriter, r *http.Request) {
 
 	var req toolCallRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		h.writeToolError(w, http.StatusBadRequest, BrokerErrorCodeValidation, "invalid request body", "")
+		h.writeToolError(w, http.StatusBadRequest, BrokerErrorCodeValidation, "invalid request body", "", "")
 		return
 	}
 
 	if req.Tool == "" {
-		h.writeToolError(w, http.StatusBadRequest, BrokerErrorCodeValidation, "tool is required", "")
+		h.writeToolError(w, http.StatusBadRequest, BrokerErrorCodeValidation, "tool is required", "", "")
 		return
 	}
 
@@ -138,7 +139,7 @@ func (h *httpServer) handleToolCall(w http.ResponseWriter, r *http.Request) {
 	result, err := h.ws.InvokeTool(r.Context(), req.Tool, req.Args, timeout)
 	if err != nil {
 		code, message, requestID := brokerErrorDetails(err)
-		h.writeToolError(w, statusForBrokerError(code), code, message, requestID)
+		h.writeToolError(w, statusForBrokerError(code), code, message, requestID, "")
 		return
 	}
 
@@ -147,7 +148,7 @@ func (h *httpServer) handleToolCall(w http.ResponseWriter, r *http.Request) {
 		if message == "" {
 			message = "tool call failed"
 		}
-		h.writeToolError(w, http.StatusBadGateway, BrokerErrorCodeOperationFailed, message, result.ID)
+		h.writeToolError(w, http.StatusBadGateway, BrokerErrorCodeOperationFailed, message, result.ID, strings.TrimSpace(result.ErrorCode))
 		return
 	}
 
@@ -161,14 +162,15 @@ func (h *httpServer) handleToolCall(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-func (h *httpServer) writeToolError(w http.ResponseWriter, status int, code BrokerErrorCode, message string, requestID string) {
+func (h *httpServer) writeToolError(w http.ResponseWriter, status int, code BrokerErrorCode, message string, requestID string, toolCode string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(toolCallResponse{
 		Ok: false,
 		Error: &toolCallError{
-			Code:    string(code),
-			Message: message,
+			Code:     string(code),
+			Message:  message,
+			ToolCode: toolCode,
 		},
 		RequestID: requestID,
 	})

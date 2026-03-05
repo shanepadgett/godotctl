@@ -1,128 +1,74 @@
 # godotctl
 
-Scaffold for a Windows-first Godot editor bridge:
+`godotctl` is a local CLI + daemon + Godot editor plugin that lets terminal commands trigger editor operations.
 
-- `godotctl` CLI + daemon (Go)
-- `godot_bridge` editor plugin (GDScript)
+## Requirements
 
-Current scaffold goal is connectivity validation only:
+- Windows-first workflow (cross-platform shell commands still work in Bash)
+- Go 1.25.x (managed via `mise` in this repo)
+- Godot 4.6 / 4.6.1
 
-- daemon starts and exposes local WS/HTTP endpoints
-- plugin connects over WebSocket and logs to Godot output on successful handshake
+## Install (User)
 
-## Layout
-
-- `cmd/godotctl` - CLI entrypoint
-- `internal/daemon` - daemon runtime (HTTP + WebSocket)
-- `addons/godot_bridge` - Godot editor plugin
-
-## Build
-
-This repo uses `mise` for tool versions (Go 1.25.x).
-
-```bash
-mise exec -- go build -o bin/godotctl.exe ./cmd/godotctl
-```
-
-Or use the built-in mise task (also copies binary to `addons/godot_bridge/bin/godotctl.exe`):
+1. Build the CLI and bundled plugin binary:
 
 ```bash
 mise run build
 ```
 
-## Run CLI via mise
+2. Copy `addons/godot_bridge/` into your Godot project.
+3. Open the project in Godot and enable the plugin in `Project Settings -> Plugins`.
 
-You can run the CLI directly with the `cli` task and pass command args after `--`:
+The plugin will try to connect to a local daemon and can auto-start it if available.
 
-```bash
-mise run cli -- status
-mise run cli -- tools list
-```
+## Get Running
 
-## Sample Project Tasks
-
-Copy the addon into the sample project:
-
-```bash
-mise run copy-addon
-```
-
-Launch the sample project in Godot 4.6 (runs `build` + `copy-addon` first):
-
-```bash
-mise run launch-sample
-```
-
-Launch detached (returns terminal immediately):
-
-```bash
-mise run launch-sample-detached
-```
-
-Set `GODOT46_EXE` before running launch:
-
-```bash
-export GODOT46_EXE="/c/Tools/Godot_v4.6-stable_win64.exe"
-```
-
-Or create a local `.env` (loaded by `mise.toml`) from `.env.example`.
-
-Use forward slashes in `.env` on Windows, for example:
-
-```dotenv
-GODOT46_EXE=C:/Godot/4_6_1/Godot_v4.6.1-stable_win64.exe
-```
-
-## Run Daemon
+Start daemon manually if needed:
 
 ```bash
 bin/godotctl.exe daemon start
 ```
 
-Daemon endpoints:
-
-- WebSocket: `ws://127.0.0.1:6505/ws`
-- HTTP status: `http://127.0.0.1:6506/status`
-
-In another shell:
+Then in another shell:
 
 ```bash
 bin/godotctl.exe status
-```
-
-Once plugin is connected:
-
-```bash
+bin/godotctl.exe tools list
 bin/godotctl.exe tools ping
 ```
 
-Expected output:
+## Development
 
-`tools ping ok: pong from godot_bridge (request_id=req_1)`
+- Build CLI and copy binary into plugin:
 
-## Auto-start Behavior (Plugin)
+```bash
+mise run build
+```
 
-When the plugin can't reach the daemon, it will try to launch it with:
+- Copy addon to sample project:
 
-- `res://addons/godot_bridge/bin/godotctl.exe`
-- `godotctl.exe` from `PATH`
-- `godotctl` from `PATH`
+```bash
+mise run copy-addon
+```
 
-Launch attempts are throttled (cooldown + reconnect backoff) to avoid log spam.
+- Launch sample project:
 
-## Test in Godot
+```bash
+mise run launch-sample
+```
 
-1. Copy `addons/godot_bridge/` into a Godot project.
-2. Open the project in Godot.
-3. Enable plugin in `Project Settings -> Plugins`.
-4. Watch Godot Output for:
+- Launch sample detached:
 
-`godot_bridge: connected to daemon`
+```bash
+mise run launch-sample-detached
+```
 
-If project name is set, it logs:
+Set `GODOT46_EXE` before launch (or create a local `.env` from `.env.example`):
 
-`godot_bridge: connected to daemon for project '<name>'`
+```dotenv
+GODOT46_EXE=C:/Godot/4_6_1/Godot_v4.6.1-stable_win64.exe
+```
 
-When running `godotctl tools ping`, Godot output should also show:
+## Command Reference
 
-`godot_bridge: received tools.ping request`
+For CLI command/flag reference, see `docs/DOCUMENTATION.md`.

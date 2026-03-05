@@ -24,9 +24,10 @@ const (
 )
 
 type Error struct {
-	Kind    Kind
-	Message string
-	Err     error
+	Kind     Kind
+	Message  string
+	Err      error
+	ToolCode string
 }
 
 func (e *Error) Error() string {
@@ -50,8 +51,25 @@ func New(kind Kind, message string) error {
 	return &Error{Kind: kind, Message: message}
 }
 
+func NewTool(kind Kind, message string, toolCode string) error {
+	return &Error{Kind: kind, Message: message, ToolCode: strings.TrimSpace(toolCode)}
+}
+
 func Wrap(kind Kind, message string, err error) error {
 	return &Error{Kind: kind, Message: message, Err: err}
+}
+
+func ToolCodeOf(err error) string {
+	if err == nil {
+		return ""
+	}
+
+	var typed *Error
+	if errors.As(err, &typed) {
+		return strings.TrimSpace(typed.ToolCode)
+	}
+
+	return ""
 }
 
 func KindOf(err error) Kind {

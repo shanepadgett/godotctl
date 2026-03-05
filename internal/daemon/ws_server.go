@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -44,11 +45,12 @@ type toolInvokeMessage struct {
 }
 
 type toolResultMessage struct {
-	Type   string         `json:"type"`
-	ID     string         `json:"id"`
-	Ok     bool           `json:"ok"`
-	Result map[string]any `json:"result,omitempty"`
-	Error  string         `json:"error,omitempty"`
+	Type      string         `json:"type"`
+	ID        string         `json:"id"`
+	Ok        bool           `json:"ok"`
+	Result    map[string]any `json:"result,omitempty"`
+	Error     string         `json:"error,omitempty"`
+	ErrorCode string         `json:"error_code,omitempty"`
 }
 
 type pendingResult struct {
@@ -159,10 +161,10 @@ func (s *wsServer) handleWS(w http.ResponseWriter, r *http.Request) {
 	defer s.clearActiveConn(conn)
 
 	conn.SetPongHandler(func(appData string) error {
-		return conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+		return nil
 	})
 
-	if err := conn.SetReadDeadline(time.Now().Add(30 * time.Second)); err != nil {
+	if err := conn.SetReadDeadline(time.Time{}); err != nil {
 		log.Printf("ws set read deadline failed: %v", err)
 	}
 
@@ -257,6 +259,7 @@ func validateToolResultMessage(msg toolResultMessage) error {
 
 	hasResult := msg.Result != nil
 	hasError := strings.TrimSpace(msg.Error) != ""
+	hasErrorCode := strings.TrimSpace(msg.ErrorCode) != ""
 
 	if msg.Ok {
 		if !hasResult {
@@ -264,6 +267,9 @@ func validateToolResultMessage(msg toolResultMessage) error {
 		}
 		if hasError {
 			return fmt.Errorf("error must be empty when ok=true")
+		}
+		if hasErrorCode {
+			return fmt.Errorf("error_code must be empty when ok=true")
 		}
 		return nil
 	}
@@ -300,6 +306,8 @@ func normalizeTools(tools []string) []string {
 	if len(normalized) == 0 {
 		return []string{"ping"}
 	}
+
+	sort.Strings(normalized)
 
 	return normalized
 }

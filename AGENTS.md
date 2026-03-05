@@ -17,4 +17,9 @@ Do not use symlinks for the sample plugin copy; use a real folder copy.
 
 ## Planning
 
-- Whenevr you are planning a new feature or enhancement, focus only on what is necessary, not fancy. Keep work simple and in scope.
+- Whenever you are planning a new feature or enhancement, focus only on what is necessary, not fancy. Keep work simple and in scope.
+
+## Documentation Maintenance
+
+- When a CLI command is added, changed, or removed, update `docs/DOCUMENTATION.md` in the same change.
+- Keep `docs/DOCUMENTATION.md` simple: command names, flags, and what each command does.

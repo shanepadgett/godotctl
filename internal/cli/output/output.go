@@ -28,8 +28,9 @@ type jsonEnvelope struct {
 }
 
 type envelopeError struct {
-	Type    string `json:"type"`
-	Message string `json:"message"`
+	Type     string `json:"type"`
+	Message  string `json:"message"`
+	ToolCode string `json:"tool_code,omitempty"`
 }
 
 func NewPresenter(jsonMode bool, stdout io.Writer, stderr io.Writer) Presenter {
@@ -75,13 +76,16 @@ func (p *jsonPresenter) Success(result Result) error {
 }
 
 func (p *jsonPresenter) Failure(command string, err error) error {
+	toolCode := clierrors.ToolCodeOf(err)
+
 	envelope := jsonEnvelope{
 		OK:      false,
 		Code:    clierrors.ExitCode(err),
 		Command: command,
 		Error: &envelopeError{
-			Type:    string(clierrors.KindOf(err)),
-			Message: err.Error(),
+			Type:     string(clierrors.KindOf(err)),
+			Message:  err.Error(),
+			ToolCode: toolCode,
 		},
 	}
 	return json.NewEncoder(p.stdout).Encode(envelope)

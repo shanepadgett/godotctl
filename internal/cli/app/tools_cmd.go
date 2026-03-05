@@ -60,8 +60,14 @@ func (a *App) newToolsCommand() *cobra.Command {
 			}
 
 			message := "pong"
-			if msg, ok := response.Result["message"].(string); ok && msg != "" {
-				message = msg
+			if msg, ok := response.Result["message"].(string); ok && strings.TrimSpace(msg) != "" {
+				message = strings.TrimSpace(msg)
+			}
+
+			if data, ok := response.Result["data"].(map[string]any); ok {
+				if msg, ok := data["message"].(string); ok && strings.TrimSpace(msg) != "" {
+					message = strings.TrimSpace(msg)
+				}
 			}
 
 			return a.presenter.Success(output.Result{
@@ -70,6 +76,7 @@ func (a *App) newToolsCommand() *cobra.Command {
 				Data: map[string]any{
 					"request_id": response.RequestID,
 					"message":    message,
+					"result":     response.Result,
 				},
 			})
 		},

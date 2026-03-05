@@ -142,6 +142,7 @@ Response:
 - Ensure daemon is reachable.
 - Invoke daemon API and render output.
 - Provide both human-readable and JSON output modes.
+- Accept project-relative paths and normalize them before execution.
 
 ### 6.2 Top-Level Commands
 
@@ -152,25 +153,25 @@ Response:
 
 ### 6.3 Scene Commands
 
-- `godotctl scene create --scene res://scenes/player.tscn --root CharacterBody2D --name Player`
+- `godotctl scene create --scene scenes/player.tscn --root CharacterBody2D --name Player`
 - `godotctl scene add-node --scene ... --name Sprite2D --type Sprite2D --parent .`
 - `godotctl scene remove-node --scene ... --path Sprite2D`
 - `godotctl scene set-prop --scene ... --path Sprite2D --prop position --value '{"type":"Vector2","x":100,"y":200}'`
-- `godotctl scene tree --scene res://scenes/player.tscn`
+- `godotctl scene tree --scene scenes/player.tscn`
 
 ### 6.4 Script Commands
 
-- `godotctl script create --path res://scripts/player.gd --base CharacterBody2D`
+- `godotctl script create --path scripts/player.gd --base CharacterBody2D`
 - `godotctl script edit --path ... --find "old" --replace "new"`
 - `godotctl script validate --path ...`
-- `godotctl script attach --scene ... --node . --script res://scripts/player.gd`
+- `godotctl script attach --scene ... --node . --script scripts/player.gd`
 
 ### 6.5 Project and File Commands
 
 - `godotctl project settings get`
 - `godotctl project input-map get`
-- `godotctl file list --path res://`
-- `godotctl file read --path res://scripts/player.gd`
+- `godotctl file list --path .`
+- `godotctl file read --path scripts/player.gd`
 
 ### 6.6 Output Modes
 

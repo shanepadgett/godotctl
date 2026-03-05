@@ -33,8 +33,9 @@ type ToolCallResponse struct {
 }
 
 type ToolCallError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Code     string `json:"code"`
+	Message  string `json:"message"`
+	ToolCode string `json:"tool_code,omitempty"`
 }
 
 func New(baseAddr string) *DaemonClient {
@@ -188,32 +189,45 @@ func (c *DaemonClient) CallTool(ctx context.Context, req ToolCallRequest) (ToolC
 func classifyToolError(toolErr *ToolCallError, fallback string) error {
 	msg := ""
 	code := ""
+	toolCode := ""
 	if toolErr != nil {
 		msg = strings.TrimSpace(toolErr.Message)
 		code = strings.TrimSpace(toolErr.Code)
+		toolCode = strings.TrimSpace(toolErr.ToolCode)
 	}
 
 	if msg == "" {
 		msg = fallback
 	}
 
+	newToolErr := func(kind clierrors.Kind, message string) error {
+		return clierrors.NewTool(kind, message, toolCode)
+	}
+
 	switch code {
 	case string(daemon.BrokerErrorCodeValidation):
-		return clierrors.New(clierrors.KindValidation, msg)
+		return newToolErr(clierrors.KindValidation, msg)
 	case string(daemon.BrokerErrorCodePluginDisconnected):
-		return clierrors.New(clierrors.KindPluginDisconnected, msg)
+		return newToolErr(clierrors.KindPluginDisconnected, msg)
 	case string(daemon.BrokerErrorCodeTimeout), string(daemon.BrokerErrorCodeCancelled), string(daemon.BrokerErrorCodeOperationFailed):
-		return clierrors.New(clierrors.KindOperationFailed, msg)
+		if toolCode == "INVALID_ARGS" {
+			return newToolErr(clierrors.KindValidation, msg)
+		}
+		return newToolErr(clierrors.KindOperationFailed, msg)
 	}
 
 	lower := strings.ToLower(msg)
 	if strings.Contains(lower, "plugin is not connected") {
-		return clierrors.New(clierrors.KindPluginDisconnected, msg)
+		return newToolErr(clierrors.KindPluginDisconnected, msg)
 	}
 
 	if strings.Contains(lower, "daemon is unavailable") {
-		return clierrors.New(clierrors.KindDaemonUnavailable, msg)
+		return newToolErr(clierrors.KindDaemonUnavailable, msg)
 	}
 
-	return clierrors.New(clierrors.KindOperationFailed, msg)
+	if toolCode == "INVALID_ARGS" {
+		return newToolErr(clierrors.KindValidation, msg)
+	}
+
+	return newToolErr(clierrors.KindOperationFailed, msg)
 }

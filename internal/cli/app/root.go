@@ -43,6 +43,7 @@ func NewRootCommand(stdout io.Writer, stderr io.Writer) *cobra.Command {
 	rootCmd.AddCommand(a.newDaemonCommand())
 	rootCmd.AddCommand(a.newStatusCommand())
 	rootCmd.AddCommand(a.newToolsCommand())
+	rootCmd.AddCommand(a.newSceneCommand())
 
 	return rootCmd
 }
