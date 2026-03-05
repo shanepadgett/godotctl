@@ -133,11 +133,11 @@ This roadmap intentionally focuses on platform capabilities, not genre templates
 
 ## Milestone 3 - Project Mutation and Data Operations
 
-- [ ] Add `project settings set --key --value <json>`.
-- [ ] Add full input-map CRUD (action create/delete, event add/remove, deadzone set).
-- [ ] Add autoload management (list/add/remove).
-- [ ] Add structured file mutation helpers for JSON/CFG/Tres-like workflows.
-- [ ] Add import settings and reimport controls where Godot APIs allow deterministic behavior.
+- [x] Add `project settings set --key --value <json>`.
+- [x] Add full input-map CRUD (action create/delete, event add/remove, deadzone set).
+- [x] Add autoload management (list/add/remove).
+- [x] Add structured file mutation helpers for JSON/CFG/Tres-like workflows.
+- [x] Add import settings and reimport controls where Godot APIs allow deterministic behavior.
 
 ## Milestone 4 - Runtime Control and Observation Loop
 

@@ -383,11 +383,23 @@ Use project-relative paths for command flags that take a project path (for examp
   - `godotctl project settings get --key application/config/name --json`
   - `godotctl project settings get --prefix application --max-settings 50 --json`
 
+### `godotctl project settings set`
+
+- What it does:
+  - Sets one project setting from a JSON value and saves `project.godot` when changed.
+- Flags:
+  - `--key <setting>`: Project setting key (for example `application/config/name`).
+  - `--value <json>`: JSON primitive, object, array, or supported typed value payload.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project settings set --key application/config/name --value '"My Game"' --json`
+
 ### `godotctl project input-map get`
 
 - What it does:
   - Returns input actions from the project input map with deterministic ordering.
   - Supports progressive disclosure with action-prefix filtering, count-only mode, and action/event limits.
+  - Event rows include a canonical `event_key`, typed `event` payload, and summary text when `--include-events` is enabled.
 - Flags:
   - `--action <name>`: Optional action name (for example `ui_accept`).
   - `--prefix <prefix>`: Optional action name prefix filter.
@@ -403,6 +415,136 @@ Use project-relative paths for command flags that take a project path (for examp
 - Example:
   - `godotctl project input-map get --json`
   - `godotctl project input-map get --prefix ui_ --include-events --max-actions 20 --max-events 10 --json`
+
+### `godotctl project input-map action create`
+
+- What it does:
+  - Creates one input action with a deadzone and no events.
+- Flags:
+  - `--action <name>`: Input action name.
+  - `--deadzone <float>`: Action deadzone (default `0.5`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project input-map action create --action ui_accept --deadzone 0.5 --json`
+
+### `godotctl project input-map action delete`
+
+- What it does:
+  - Deletes one input action when present.
+- Flags:
+  - `--action <name>`: Input action name.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project input-map action delete --action ui_accept --json`
+
+### `godotctl project input-map event add`
+
+- What it does:
+  - Adds one typed input event to one input action.
+- Flags:
+  - `--action <name>`: Input action name.
+  - `--event <json>`: Typed event JSON payload.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Supported event types:
+  - `key`: `{"type":"key","keycode":4194309}`
+  - `mouse_button`: `{"type":"mouse_button","button_index":1}`
+  - `joypad_button`: `{"type":"joypad_button","device":0,"button_index":0}`
+  - `joypad_motion`: `{"type":"joypad_motion","device":0,"axis":0,"axis_value":1.0}`
+- Example:
+  - `godotctl project input-map event add --action ui_accept --event '{"type":"key","keycode":4194309}' --json`
+
+### `godotctl project input-map event remove`
+
+- What it does:
+  - Removes one typed input event from one input action when present.
+- Flags:
+  - `--action <name>`: Input action name.
+  - `--event <json>`: Typed event JSON payload.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project input-map event remove --action ui_accept --event '{"type":"key","keycode":4194309}' --json`
+
+### `godotctl project input-map deadzone set`
+
+- What it does:
+  - Sets one input action deadzone.
+- Flags:
+  - `--action <name>`: Input action name.
+  - `--value <float>`: Deadzone value.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project input-map deadzone set --action ui_accept --value 0.5 --json`
+
+### `godotctl project autoload list`
+
+- What it does:
+  - Lists project autoload entries in deterministic order.
+- Flags:
+  - `--name <name>`: Optional autoload name filter.
+  - `--max <int>`: Max returned rows (`0` means no limit, default `200`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project autoload list --json`
+
+### `godotctl project autoload add`
+
+- What it does:
+  - Adds one autoload entry from a script or scene path.
+- Flags:
+  - `--name <name>`: Autoload name.
+  - `--path <path>`: Project-relative script or scene path.
+  - `--singleton`: Register as a singleton (default `true`).
+  - `--index <int>`: Optional autoload order index.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project autoload add --name Globals --path scripts/globals.gd --singleton --json`
+
+### `godotctl project autoload remove`
+
+- What it does:
+  - Removes one autoload entry by name when present.
+- Flags:
+  - `--name <name>`: Autoload name.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project autoload remove --name Globals --json`
+
+### `godotctl project import get`
+
+- What it does:
+  - Returns deterministic rows from one asset's `.import` metadata file.
+- Flags:
+  - `--path <path>`: Source asset path, not the `.import` path.
+  - `--key <section/name>`: Optional exact import property key.
+  - `--prefix <prefix>`: Optional import property key prefix.
+  - `--include-values`: Include serialized values.
+  - `--max-properties <int>`: Max returned property rows (`0` means no limit, default `200`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project import get --path icon.svg --include-values --json`
+
+### `godotctl project import set`
+
+- What it does:
+  - Sets one import metadata property and saves the `.import` file when changed.
+  - Does not automatically reimport the asset.
+- Flags:
+  - `--path <path>`: Source asset path, not the `.import` path.
+  - `--key <section/name>`: Import property key.
+  - `--value <json>`: JSON value payload.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project import set --path icon.svg --key params/compress/mode --value '1' --json`
+
+### `godotctl project import reimport`
+
+- What it does:
+  - Reimports one source asset through Godot after import metadata changes.
+- Flags:
+  - `--path <path>`: Source asset path.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project import reimport --path icon.svg --json`
 
 ### `godotctl project graph`
 
@@ -504,6 +646,79 @@ Use project-relative paths for command flags that take a project path (for examp
   - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
 - Example:
   - `godotctl file read --path scripts/player.gd --json`
+
+### `godotctl file json get`
+
+- What it does:
+  - Reads one JSON value by JSON Pointer (`""` means the whole document).
+- Flags:
+  - `--path <path>`: Project-relative `.json` file path.
+  - `--pointer <json-pointer>`: Optional JSON Pointer.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl file json get --path data/config.json --pointer /game/name --json`
+
+### `godotctl file json set`
+
+- What it does:
+  - Sets one JSON value by JSON Pointer and saves the file when changed.
+- Flags:
+  - `--path <path>`: Project-relative `.json` file path.
+  - `--pointer <json-pointer>`: Optional JSON Pointer.
+  - `--value <json>`: JSON value payload.
+  - `--create`: Create the file if missing.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl file json set --path data/config.json --pointer /game/name --value '"Demo"' --json`
+
+### `godotctl file json remove`
+
+- What it does:
+  - Removes one JSON value by JSON Pointer when present.
+- Flags:
+  - `--path <path>`: Project-relative `.json` file path.
+  - `--pointer <json-pointer>`: JSON Pointer to remove.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl file json remove --path data/config.json --pointer /game/name --json`
+
+### `godotctl file cfg get`
+
+- What it does:
+  - Reads deterministic section/key rows from a `.cfg`-style file.
+- Flags:
+  - `--path <path>`: Project-relative `.cfg` path.
+  - `--section <name>`: Optional section filter.
+  - `--key <name>`: Optional key filter (requires `--section`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl file cfg get --path addons/godot_bridge/plugin.cfg --section plugin --key name --json`
+
+### `godotctl file cfg set`
+
+- What it does:
+  - Sets one value in a `.cfg`-style file and saves when changed.
+- Flags:
+  - `--path <path>`: Project-relative `.cfg` path.
+  - `--section <name>`: Section name.
+  - `--key <name>`: Key name.
+  - `--value <json>`: JSON value payload.
+  - `--create`: Create the file if missing.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl file cfg set --path addons/godot_bridge/plugin.cfg --section plugin --key name --value '"Bridge"' --json`
+
+### `godotctl file cfg remove`
+
+- What it does:
+  - Removes one section or one key from a `.cfg`-style file when present.
+- Flags:
+  - `--path <path>`: Project-relative `.cfg` path.
+  - `--section <name>`: Section name.
+  - `--key <name>`: Optional key name. If omitted, removes the whole section.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl file cfg remove --path addons/godot_bridge/plugin.cfg --section plugin --key name --json`
 
 ## Exit Codes
 

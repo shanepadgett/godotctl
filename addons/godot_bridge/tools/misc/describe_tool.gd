@@ -95,6 +95,113 @@ func _build_definitions() -> Array:
 			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
 		),
 		_tool_definition(
+			"file.json_get",
+			"Read one JSON value by JSON Pointer",
+			_args_schema(["path"], {
+				"path": _schema("string", "Project-relative .json file path"),
+				"pointer": _schema("string", "Optional JSON Pointer (empty means root)"),
+			}),
+			_result_schema({
+				"path": _schema("string", "Resolved file path"),
+				"pointer": _schema("string", "Applied JSON Pointer"),
+				"value": _schema("any", "Normalized JSON value"),
+				"value_text": _schema("string", "JSON text form of the value"),
+				"value_type": _schema("string", "Variant type for the returned value"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
+		),
+		_tool_definition(
+			"file.json_remove",
+			"Remove one JSON value by JSON Pointer",
+			_args_schema(["path", "pointer"], {
+				"path": _schema("string", "Project-relative .json file path"),
+				"pointer": _schema("string", "JSON Pointer to remove"),
+			}),
+			_result_schema({
+				"path": _schema("string", "Resolved file path"),
+				"pointer": _schema("string", "Removed JSON Pointer"),
+				"changed": _schema("bool", "Whether the document changed"),
+				"saved": _schema("bool", "Whether file save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"file.json_set",
+			"Set one JSON value by JSON Pointer",
+			_args_schema(["path", "value_json"], {
+				"path": _schema("string", "Project-relative .json file path"),
+				"pointer": _schema("string", "Optional JSON Pointer (empty means root)"),
+				"value_json": _schema("string", "JSON value payload"),
+				"create": _schema("bool", "Create the file if it does not exist"),
+			}),
+			_result_schema({
+				"path": _schema("string", "Resolved file path"),
+				"pointer": _schema("string", "Updated JSON Pointer"),
+				"changed": _schema("bool", "Whether the document changed"),
+				"saved": _schema("bool", "Whether file save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"file.cfg_get",
+			"Read values from a CFG-style file",
+			_args_schema(["path"], {
+				"path": _schema("string", "Project-relative .cfg or .import file path"),
+				"section": _schema("string", "Optional section filter"),
+				"key": _schema("string", "Optional key filter"),
+			}),
+			_result_schema({
+				"path": _schema("string", "Resolved file path"),
+				"section": _schema("string", "Applied section filter"),
+				"key": _schema("string", "Applied key filter"),
+				"entries": _schema("array<object>", "Sorted config entries"),
+				"count": _schema("int", "Entry count"),
+				"returned_count": _schema("int", "Returned entry count"),
+				"truncated": _schema("bool", "Whether entries were truncated"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
+		),
+		_tool_definition(
+			"file.cfg_set",
+			"Set one value in a CFG-style file",
+			_args_schema(["path", "section", "key", "value_json"], {
+				"path": _schema("string", "Project-relative .cfg or .import file path"),
+				"section": _schema("string", "Section name"),
+				"key": _schema("string", "Key name"),
+				"value_json": _schema("string", "JSON value payload"),
+				"create": _schema("bool", "Create the file if it does not exist"),
+			}),
+			_result_schema({
+				"path": _schema("string", "Resolved file path"),
+				"section": _schema("string", "Updated section name"),
+				"key": _schema("string", "Updated key name"),
+				"changed": _schema("bool", "Whether the config changed"),
+				"saved": _schema("bool", "Whether file save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"file.cfg_remove",
+			"Remove one section or key from a CFG-style file",
+			_args_schema(["path", "section"], {
+				"path": _schema("string", "Project-relative .cfg or .import file path"),
+				"section": _schema("string", "Section name"),
+				"key": _schema("string", "Optional key name"),
+			}),
+			_result_schema({
+				"path": _schema("string", "Resolved file path"),
+				"section": _schema("string", "Removed section name"),
+				"key": _schema("string", "Removed key name"),
+				"changed": _schema("bool", "Whether the config changed"),
+				"saved": _schema("bool", "Whether file save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
 			"ping",
 			"Round-trip plugin reachability check",
 			_args_schema([], {}),
@@ -185,6 +292,208 @@ func _build_definitions() -> Array:
 				"truncated": _schema("bool", "Whether setting rows were truncated by limit"),
 			}),
 			_error_schema(["INVALID_ARGS", "NOT_FOUND", "IO_ERROR", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.settings_set",
+			"Set one project setting",
+			_args_schema(["key", "value_json"], {
+				"key": _schema("string", "Project setting key"),
+				"value_json": _schema("string", "JSON value payload"),
+			}),
+			_result_schema({
+				"key": _schema("string", "Updated setting key"),
+				"changed": _schema("bool", "Whether the setting changed"),
+				"saved": _schema("bool", "Whether project settings save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.input_map_action_create",
+			"Create one project input action",
+			_args_schema(["action"], {
+				"action": _schema("string", "Input action name"),
+				"deadzone": _schema("float", "Action deadzone (default 0.5)"),
+			}),
+			_result_schema({
+				"action": _schema("string", "Created action name"),
+				"deadzone": _schema("float", "Configured deadzone"),
+				"changed": _schema("bool", "Whether the input map changed"),
+				"saved": _schema("bool", "Whether project settings save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "ALREADY_EXISTS", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.input_map_action_delete",
+			"Delete one project input action",
+			_args_schema(["action"], {
+				"action": _schema("string", "Input action name"),
+			}),
+			_result_schema({
+				"action": _schema("string", "Deleted action name"),
+				"changed": _schema("bool", "Whether the input map changed"),
+				"saved": _schema("bool", "Whether project settings save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.input_map_event_add",
+			"Add one input event to a project action",
+			_args_schema(["action", "event_json"], {
+				"action": _schema("string", "Input action name"),
+				"event_json": _schema("string", "Typed input event JSON payload"),
+			}),
+			_result_schema({
+				"action": _schema("string", "Updated action name"),
+				"event_key": _schema("string", "Canonical event key"),
+				"changed": _schema("bool", "Whether the input map changed"),
+				"saved": _schema("bool", "Whether project settings save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.input_map_event_remove",
+			"Remove one input event from a project action",
+			_args_schema(["action", "event_json"], {
+				"action": _schema("string", "Input action name"),
+				"event_json": _schema("string", "Typed input event JSON payload"),
+			}),
+			_result_schema({
+				"action": _schema("string", "Updated action name"),
+				"event_key": _schema("string", "Canonical event key"),
+				"changed": _schema("bool", "Whether the input map changed"),
+				"saved": _schema("bool", "Whether project settings save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.input_map_deadzone_set",
+			"Set one project input action deadzone",
+			_args_schema(["action", "value"], {
+				"action": _schema("string", "Input action name"),
+				"value": _schema("float", "Deadzone value"),
+			}),
+			_result_schema({
+				"action": _schema("string", "Updated action name"),
+				"deadzone": _schema("float", "Configured deadzone"),
+				"changed": _schema("bool", "Whether the input map changed"),
+				"saved": _schema("bool", "Whether project settings save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.autoload_list",
+			"List project autoload entries",
+			_args_schema([], {
+				"name": _schema("string", "Optional autoload name filter"),
+				"max": _schema("int", "Max returned rows (0 means no limit, default 200)"),
+			}),
+			_result_schema({
+				"name": _schema("string", "Applied autoload name filter"),
+				"max": _schema("int", "Requested max rows"),
+				"autoloads": _schema("array<object>", "Sorted autoload rows"),
+				"count": _schema("int", "Autoload count"),
+				"returned_count": _schema("int", "Returned row count"),
+				"truncated": _schema("bool", "Whether rows were truncated by max"),
+			}),
+			_error_schema(["INVALID_ARGS", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.autoload_add",
+			"Add one project autoload entry",
+			_args_schema(["name", "path"], {
+				"name": _schema("string", "Autoload name"),
+				"path": _schema("string", "Script or scene path"),
+				"singleton": _schema("bool", "Whether to register as a singleton (default true)"),
+				"index": _schema("int", "Optional order index"),
+			}),
+			_result_schema({
+				"name": _schema("string", "Autoload name"),
+				"path": _schema("string", "Resolved path"),
+				"singleton": _schema("bool", "Singleton flag"),
+				"enabled": _schema("bool", "Whether the autoload is enabled"),
+				"index": _schema("int", "Autoload order index"),
+				"changed": _schema("bool", "Whether project settings changed"),
+				"saved": _schema("bool", "Whether project settings save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "ALREADY_EXISTS", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.autoload_remove",
+			"Remove one project autoload entry",
+			_args_schema(["name"], {
+				"name": _schema("string", "Autoload name"),
+			}),
+			_result_schema({
+				"name": _schema("string", "Autoload name"),
+				"changed": _schema("bool", "Whether project settings changed"),
+				"saved": _schema("bool", "Whether project settings save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.import_get",
+			"Inspect import metadata for one source asset",
+			_args_schema(["path"], {
+				"path": _schema("string", "Source asset path"),
+				"key": _schema("string", "Optional import property key"),
+				"prefix": _schema("string", "Optional import property key prefix"),
+				"include_values": _schema("bool", "Include import property values"),
+				"max_properties": _schema("int", "Max returned properties (0 means no limit, default 200)"),
+			}),
+			_result_schema({
+				"source_path": _schema("string", "Resolved source asset path"),
+				"import_path": _schema("string", "Resolved .import metadata path"),
+				"requested_key": _schema("string", "Requested import property key"),
+				"prefix": _schema("string", "Applied prefix filter"),
+				"include_values": _schema("bool", "Whether values were included"),
+				"max_properties": _schema("int", "Requested max properties"),
+				"properties": _schema("array<object>", "Sorted import property rows"),
+				"count": _schema("int", "Property count"),
+				"returned_count": _schema("int", "Returned property row count"),
+				"truncated": _schema("bool", "Whether rows were truncated by max"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.import_set",
+			"Set one import metadata property",
+			_args_schema(["path", "key", "value_json"], {
+				"path": _schema("string", "Source asset path"),
+				"key": _schema("string", "Import property key in section/name form"),
+				"value_json": _schema("string", "JSON value payload"),
+			}),
+			_result_schema({
+				"source_path": _schema("string", "Resolved source asset path"),
+				"import_path": _schema("string", "Resolved .import metadata path"),
+				"key": _schema("string", "Updated import property key"),
+				"changed": _schema("bool", "Whether metadata changed"),
+				"reimport_required": _schema("bool", "Whether reimport is required"),
+				"saved": _schema("bool", "Whether metadata save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"project.import_reimport",
+			"Reimport one source asset",
+			_args_schema(["path"], {
+				"path": _schema("string", "Source asset path"),
+			}),
+			_result_schema({
+				"source_path": _schema("string", "Resolved source asset path"),
+				"changed": _schema("bool", "Whether a reimport request was issued"),
+				"saved": _schema("bool", "Whether metadata was saved in this operation"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "EDITOR_STATE", "INTERNAL"])
 		),
 		_tool_definition(
 			"resource.create",

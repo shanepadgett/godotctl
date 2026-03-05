@@ -42,7 +42,32 @@ func decode(value: Variant) -> Dictionary:
 		return {"ok": true, "value": float(value)}
 	if value_type == TYPE_STRING:
 		return {"ok": true, "value": str(value)}
+	if value_type == TYPE_ARRAY:
+		var decoded_array: Array = []
+		for item in value:
+			var item_result := decode(item)
+			if not bool(item_result.get("ok", false)):
+				return item_result
+			decoded_array.append(item_result.get("value", null))
+		return {"ok": true, "value": decoded_array}
 	if value_type == TYPE_DICTIONARY:
-		return _typed_decoder.decode(value)
+		if value.has("type"):
+			var type_name := str(value.get("type", "")).strip_edges()
+			if type_name == "Vector2" or type_name == "Vector3" or type_name == "Color" or type_name == "NodePath":
+				return _typed_decoder.decode(value)
+
+		var decoded_dictionary := {}
+		var keys: Array = value.keys()
+		keys.sort_custom(Callable(self , "_compare_keys"))
+		for key in keys:
+			var entry_result := decode(value.get(key))
+			if not bool(entry_result.get("ok", false)):
+				return entry_result
+			decoded_dictionary[str(key)] = entry_result.get("value", null)
+		return {"ok": true, "value": decoded_dictionary}
 
 	return _result.error(_errors.INVALID_ARGS, "value_json must be a primitive or typed object")
+
+
+func _compare_keys(a: Variant, b: Variant) -> bool:
+	return str(a) < str(b)
