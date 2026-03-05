@@ -12,8 +12,6 @@ When updating plugin code:
 2. Rebuild the CLI binary with `mise run build` when needed.
 3. Restart Godot (or disable/enable plugin) to reload scripts.
 
-> **IMPORTANT**: When running commands for this repo, always use Bash, NEVER PowerShell.
-
 ## CLI Execution
 
 - For live CLI validation, run the built CLI directly from `bin/godotctl.exe` (for example, `./bin/godotctl.exe status --json`).
