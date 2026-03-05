@@ -4,9 +4,11 @@ import (
 	"io"
 
 	"github.com/shanepadgett/godotctl/internal/cli/client"
+	classcmd "github.com/shanepadgett/godotctl/internal/cli/commands/class"
 	daemoncmd "github.com/shanepadgett/godotctl/internal/cli/commands/daemon"
 	filecmd "github.com/shanepadgett/godotctl/internal/cli/commands/file"
 	projectcmd "github.com/shanepadgett/godotctl/internal/cli/commands/project"
+	resourcecmd "github.com/shanepadgett/godotctl/internal/cli/commands/resource"
 	scenecmd "github.com/shanepadgett/godotctl/internal/cli/commands/scene"
 	scriptcmd "github.com/shanepadgett/godotctl/internal/cli/commands/script"
 	"github.com/shanepadgett/godotctl/internal/cli/commands/shared"
@@ -60,9 +62,11 @@ func NewRootCommand(stdout io.Writer, stderr io.Writer) *cobra.Command {
 	rootCmd.AddCommand(daemoncmd.New(deps))
 	rootCmd.AddCommand(statuscmd.New(deps))
 	rootCmd.AddCommand(toolscmd.New(deps))
+	rootCmd.AddCommand(classcmd.New(deps))
 	rootCmd.AddCommand(scenecmd.New(deps))
 	rootCmd.AddCommand(scriptcmd.New(deps))
 	rootCmd.AddCommand(projectcmd.New(deps))
+	rootCmd.AddCommand(resourcecmd.New(deps))
 	rootCmd.AddCommand(filecmd.New(deps))
 
 	return rootCmd

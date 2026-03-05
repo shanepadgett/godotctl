@@ -16,6 +16,7 @@ func New(deps shared.Deps) *cobra.Command {
 	sceneCmd.AddCommand(newRemoveNodeCommand(deps))
 	sceneCmd.AddCommand(newSetPropCommand(deps))
 	sceneCmd.AddCommand(newTreeCommand(deps))
+	sceneCmd.AddCommand(newInspectCommand(deps))
 
 	return sceneCmd
 }

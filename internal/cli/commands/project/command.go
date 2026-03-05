@@ -25,5 +25,7 @@ func New(deps shared.Deps) *cobra.Command {
 	inputMapCmd.AddCommand(newInputMapGetCommand(deps))
 	projectCmd.AddCommand(inputMapCmd)
 
+	projectCmd.AddCommand(newGraphCommand(deps))
+
 	return projectCmd
 }

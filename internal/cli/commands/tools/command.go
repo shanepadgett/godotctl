@@ -13,6 +13,7 @@ func New(deps shared.Deps) *cobra.Command {
 
 	toolsCmd.AddCommand(newListCommand(deps))
 	toolsCmd.AddCommand(newPingCommand(deps))
+	toolsCmd.AddCommand(newDescribeCommand(deps))
 
 	return toolsCmd
 }

@@ -8,6 +8,7 @@ const RECONNECT_DELAY_MIN_MSEC := 2000
 const RECONNECT_DELAY_MAX_MSEC := 30000
 const AUTO_START_COOLDOWN_MSEC := 15000
 const CONNECT_WATCHDOG_MSEC := 300
+const MAX_TOOL_RESULT_JSON_BYTES := 60000
 const TOOL_EXECUTOR_SCRIPT := preload("res://addons/godot_bridge/tool_executor.gd")
 
 var _socket := WebSocketPeer.new()
@@ -220,7 +221,41 @@ func _send_tool_result(request_id: String, execution: Dictionary) -> void:
 		push_warning("godot_bridge: invalid tool_result payload: %s" % validation_error)
 		return
 
-	_socket.send_text(JSON.stringify(payload))
+	var payload_text := JSON.stringify(payload)
+	var payload_size := payload_text.to_utf8_buffer().size()
+	if payload_size > MAX_TOOL_RESULT_JSON_BYTES:
+		payload_text = _tool_error_payload_json(request_id, "tool result payload too large: %d bytes (limit %d)" % [payload_size, MAX_TOOL_RESULT_JSON_BYTES], "INTERNAL")
+
+	var send_err := _socket.send_text(payload_text)
+	if send_err == OK:
+		return
+
+	var fallback_text := _tool_error_payload_json(request_id, "failed to send tool result: %s" % error_string(send_err), "INTERNAL")
+	var fallback_err := _socket.send_text(fallback_text)
+	if fallback_err != OK:
+		push_warning("godot_bridge: failed to send tool result fallback: %s" % error_string(fallback_err))
+
+
+func _tool_error_payload_json(request_id: String, message: String, error_code: String) -> String:
+	var payload := {
+		"type": "tool_result",
+		"id": request_id,
+		"ok": false,
+		"error": str(message).strip_edges(),
+		"error_code": str(error_code).strip_edges(),
+	}
+
+	var validation_error := _validate_tool_result_message(payload)
+	if validation_error.is_empty():
+		return JSON.stringify(payload)
+
+	return JSON.stringify({
+		"type": "tool_result",
+		"id": request_id,
+		"ok": false,
+		"error": "tool call failed",
+		"error_code": "INTERNAL",
+	})
 
 
 func _validate_hello_message(data: Dictionary) -> String:

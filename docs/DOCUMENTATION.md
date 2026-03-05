@@ -47,6 +47,33 @@ Use project-relative paths for command flags that take a project path (for examp
 - Flags:
   - None.
 
+### `godotctl tools describe`
+
+- What it does:
+  - Returns machine-readable tool argument/result/error schemas.
+- Flags:
+  - `--tool <name>`: Optional tool name to describe one tool schema.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl tools describe --tool scene.create --json`
+
+### `godotctl class describe`
+
+- What it does:
+  - Returns Godot class metadata with progressive disclosure.
+  - Summary counts are always returned; detailed properties/methods/signals/inheritors are opt-in.
+- Flags:
+  - `--name <ClassName>`: Godot class name (for example `CharacterBody2D`).
+  - `--include-properties`: Include detailed property metadata.
+  - `--include-methods`: Include detailed method metadata.
+  - `--include-signals`: Include detailed signal metadata.
+  - `--include-inheritors`: Include direct inheritor class names.
+  - `--full`: Include all optional detailed sections.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl class describe --name CharacterBody2D --json`
+  - `godotctl class describe --name CharacterBody2D --full --json`
+
 ### `godotctl scene create`
 
 - What it does:
@@ -113,6 +140,25 @@ Use project-relative paths for command flags that take a project path (for examp
 - Example:
   - `godotctl scene tree --scene scenes/player.tscn`
 
+### `godotctl scene inspect`
+
+- What it does:
+  - Loads a scene and returns deterministic snapshots of node paths and groups.
+  - Supports progressive disclosure flags for properties, signal names, and signal connections to keep payloads smaller on large scenes.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--node <path>`: Optional node path to inspect a single subtree.
+  - `--include-properties`: Include per-node property snapshots.
+  - `--include-property-values`: Include serialized property values (requires `--include-properties`).
+  - `--include-connections`: Include signal connection rows.
+  - `--include-signal-names`: Include per-node signal names.
+  - `--max-properties <int>`: Max properties per node when included (`0` means no limit, default `16`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene inspect --scene scenes/player.tscn --json`
+  - `godotctl scene inspect --scene scenes/player.tscn --node Enemies --include-connections --json`
+  - `godotctl scene inspect --scene scenes/player.tscn --include-properties --max-properties 8 --json`
+
 ### `godotctl script create`
 
 - What it does:
@@ -165,21 +211,75 @@ Use project-relative paths for command flags that take a project path (for examp
 
 - What it does:
   - Returns one project setting by key, or a deterministic sorted list of public project settings.
+  - Supports progressive disclosure for large projects: filter by prefix, count-only mode, and optional value payloads.
 - Flags:
   - `--key <setting>`: Optional project setting key (for example `application/config/name`).
+  - `--prefix <prefix>`: Optional setting key prefix filter (for example `application/config`).
+  - `--include-values`: Include serialized setting values in rows.
+  - `--count-only`: Return counts only without setting rows.
+  - `--max-settings <int>`: Max returned setting rows (`0` means no limit, default `200`).
   - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Notes:
+  - `--key` and `--prefix` cannot be used together.
+  - `--count-only` and `--include-values` cannot be used together.
+  - When `--key` is set, values are included by default unless `--count-only` is used.
 - Example:
   - `godotctl project settings get --key application/config/name --json`
+  - `godotctl project settings get --prefix application --max-settings 50 --json`
 
 ### `godotctl project input-map get`
 
 - What it does:
-  - Returns input actions and deterministic event summaries from the project input map.
+  - Returns input actions from the project input map with deterministic ordering.
+  - Supports progressive disclosure with action-prefix filtering, count-only mode, and action/event limits.
 - Flags:
   - `--action <name>`: Optional action name (for example `ui_accept`).
+  - `--prefix <prefix>`: Optional action name prefix filter.
+  - `--include-events`: Include summarized event rows per action.
+  - `--count-only`: Return counts only without action rows.
+  - `--max-actions <int>`: Max returned action rows (`0` means no limit, default `200`).
+  - `--max-events <int>`: Max returned events per action (`0` means no limit, default `200`).
   - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Notes:
+  - `--action` and `--prefix` cannot be used together.
+  - `--count-only` and `--include-events` cannot be used together.
+  - When `--action` is set, events are included by default unless `--count-only` is used.
 - Example:
   - `godotctl project input-map get --json`
+  - `godotctl project input-map get --prefix ui_ --include-events --max-actions 20 --max-events 10 --json`
+
+### `godotctl project graph`
+
+- What it does:
+  - Scans project resources and returns deterministic graph counts.
+  - Uses progressive disclosure: node/edge rows are opt-in to keep large-project payloads smaller.
+- Flags:
+  - `--root <path>`: Optional graph root path (defaults to `res://`).
+  - `--prefix <path>`: Optional path prefix filter for nodes/edges.
+  - `--include-nodes`: Include node rows in output.
+  - `--include-edges`: Include edge rows in output.
+  - `--full`: Include both nodes and edges.
+  - `--max-nodes <int>`: Max returned node rows (`0` means no limit, default `200`).
+  - `--max-edges <int>`: Max returned edge rows (`0` means no limit, default `200`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project graph --json`
+  - `godotctl project graph --prefix scenes/stress --include-edges --max-edges 200 --json`
+
+### `godotctl resource refs`
+
+- What it does:
+  - Returns deterministic reverse references to one project resource path.
+  - Supports progressive disclosure with source-prefix filtering, count-only mode, and row limits.
+- Flags:
+  - `--path <path>`: Project-relative resource path to inspect.
+  - `--from-prefix <path>`: Optional source path prefix filter.
+  - `--count-only`: Return counts only without reference rows.
+  - `--max-refs <int>`: Max returned reference rows (`0` means no limit, default `200`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl resource refs --path scenes/player.tscn --json`
+  - `godotctl resource refs --path scripts/stress/shared_ai.gd --from-prefix scenes/stress --max-refs 25 --json`
 
 ### `godotctl file list`
 

@@ -23,3 +23,7 @@ Do not use symlinks for the sample plugin copy; use a real folder copy.
 
 - When a CLI command is added, changed, or removed, update `docs/DOCUMENTATION.md` in the same change.
 - Keep `docs/DOCUMENTATION.md` simple: command names, flags, and what each command does.
+
+## Research
+
+**ALWAYS** delegate to subagents to do codebase research. You waste token and your own ability to reason and think if all you do is read the entire codebase into your memory. And if you have multiple things to research based on topics, dispatch multiple simultaneous agents to get the research done faster in smaller chunks.
