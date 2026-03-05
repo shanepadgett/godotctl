@@ -11,6 +11,10 @@ const SCRIPT_CREATE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scri
 const SCRIPT_EDIT_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/script/edit_tool.gd")
 const SCRIPT_VALIDATE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/script/validate_tool.gd")
 const SCRIPT_ATTACH_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/script/attach_tool.gd")
+const PROJECT_SETTINGS_GET_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/project/settings_get_tool.gd")
+const PROJECT_INPUT_MAP_GET_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/project/input_map_get_tool.gd")
+const FILE_LIST_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/file/list_tool.gd")
+const FILE_READ_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/file/read_tool.gd")
 
 
 func instantiate_tools() -> Array[RefCounted]:
@@ -25,4 +29,8 @@ func instantiate_tools() -> Array[RefCounted]:
 		SCRIPT_EDIT_TOOL_SCRIPT.new(),
 		SCRIPT_VALIDATE_TOOL_SCRIPT.new(),
 		SCRIPT_ATTACH_TOOL_SCRIPT.new(),
+		PROJECT_SETTINGS_GET_TOOL_SCRIPT.new(),
+		PROJECT_INPUT_MAP_GET_TOOL_SCRIPT.new(),
+		FILE_LIST_TOOL_SCRIPT.new(),
+		FILE_READ_TOOL_SCRIPT.new(),
 	]

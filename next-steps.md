@@ -129,7 +129,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
 
 ## Milestone D3 - Project and File Basics
 
-- [ ] Implement `project settings get` end-to-end.
+- [x] Implement `project settings get` end-to-end.
   - CLI command:
     - `godotctl project settings get [--key <setting>] [--timeout-ms <ms>]`
   - Tool call:
@@ -139,7 +139,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
     - if `key` provided, return one setting or `NOT_FOUND`
     - if omitted, return deterministic sorted list/map of public settings
 
-- [ ] Implement `project input-map get` end-to-end.
+- [x] Implement `project input-map get` end-to-end.
   - CLI command:
     - `godotctl project input-map get [--action <name>] [--timeout-ms <ms>]`
   - Tool call:
@@ -148,7 +148,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
   - Plugin behavior:
     - return deterministic action list and event summaries
 
-- [ ] Implement `file list` end-to-end.
+- [x] Implement `file list` end-to-end.
   - CLI command:
     - `godotctl file list --path <project-relative-path> [--recursive] [--timeout-ms <ms>]`
   - Tool call:
@@ -158,7 +158,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
     - list directories/files under `res://` path
     - return sorted entries (stable order)
 
-- [ ] Implement `file read` end-to-end.
+- [x] Implement `file read` end-to-end.
   - CLI command:
     - `godotctl file read --path <project-relative-path> [--timeout-ms <ms>]`
   - Tool call:
@@ -168,7 +168,7 @@ This checklist starts after Milestone C completion and covers the remaining basi
     - read file contents and return text + byte count
     - return `NOT_FOUND` for missing path
 
-- [ ] Add `project` and `file` command groups in CLI.
+- [x] Add `project` and `file` command groups in CLI.
   - Create `internal/cli/app/project_cmd.go`.
   - Create `internal/cli/app/file_cmd.go`.
   - Register both in `internal/cli/app/root.go`.
@@ -206,8 +206,8 @@ This checklist starts after Milestone C completion and covers the remaining basi
 - [x] `bin/godotctl.exe script validate --path scripts/tools_e2e.gd --json`
 - [x] `bin/godotctl.exe script edit --path scripts/tools_e2e.gd --find "pass" --replace "print(\"ready\")"`
 - [x] `bin/godotctl.exe script attach --scene scenes/tools_e2e.tscn --node . --script scripts/tools_e2e.gd`
-- [ ] `bin/godotctl.exe project settings get --key application/config/name --json`
-- [ ] `bin/godotctl.exe project input-map get --json`
-- [ ] `bin/godotctl.exe file list --path scripts --json`
-- [ ] `bin/godotctl.exe file read --path scripts/tools_e2e.gd --json`
-- [ ] Confirm `docs/DOCUMENTATION.md` includes every command and flag implemented above.
+- [x] `bin/godotctl.exe project settings get --key application/config/name --json`
+- [x] `bin/godotctl.exe project input-map get --json`
+- [x] `bin/godotctl.exe file list --path scripts --json`
+- [x] `bin/godotctl.exe file read --path scripts/tools_e2e.gd --json`
+- [x] Confirm `docs/DOCUMENTATION.md` includes every command and flag implemented above.

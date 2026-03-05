@@ -161,6 +161,47 @@ Use project-relative paths for command flags that take a project path (for examp
 - Example:
   - `godotctl script attach --scene scenes/player.tscn --node . --script scripts/player.gd`
 
+### `godotctl project settings get`
+
+- What it does:
+  - Returns one project setting by key, or a deterministic sorted list of public project settings.
+- Flags:
+  - `--key <setting>`: Optional project setting key (for example `application/config/name`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project settings get --key application/config/name --json`
+
+### `godotctl project input-map get`
+
+- What it does:
+  - Returns input actions and deterministic event summaries from the project input map.
+- Flags:
+  - `--action <name>`: Optional action name (for example `ui_accept`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl project input-map get --json`
+
+### `godotctl file list`
+
+- What it does:
+  - Lists files/directories under a project path in stable sorted order.
+- Flags:
+  - `--path <path>`: Project-relative path to a directory.
+  - `--recursive`: Recursively include nested files/directories.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl file list --path scripts --json`
+
+### `godotctl file read`
+
+- What it does:
+  - Reads a project file as text and returns file contents plus byte count.
+- Flags:
+  - `--path <path>`: Project-relative path to a file.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl file read --path scripts/player.gd --json`
+
 ## Exit Codes
 
 - `0`: Success
