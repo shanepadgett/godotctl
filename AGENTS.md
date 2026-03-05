@@ -15,6 +15,12 @@ Do not use symlinks for the sample plugin copy; use a real folder copy.
 
 > **IMPORTANT**: When running commands for this repo, always use Bash, NEVER PowerShell.
 
+## CLI Execution
+
+- For live CLI validation, run the built CLI directly from `bin/godotctl.exe` (for example, `./bin/godotctl.exe status --json`).
+- Do not use `mise run cli --` for live validation commands.
+- If the binary is missing or stale, rebuild with `mise run build` first.
+
 ## Planning
 
 - Whenever you are planning a new feature or enhancement, focus only on what is necessary, not fancy. Keep work simple and in scope.

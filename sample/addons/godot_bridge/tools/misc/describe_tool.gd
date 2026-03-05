@@ -187,6 +187,75 @@ func _build_definitions() -> Array:
 			_error_schema(["INVALID_ARGS", "NOT_FOUND", "IO_ERROR", "INTERNAL"])
 		),
 		_tool_definition(
+			"resource.create",
+			"Create a project resource",
+			_args_schema(["path", "type"], {
+				"path": _schema("string", "Project-relative resource path"),
+				"type": _schema("string", "Resource class name"),
+				"overwrite": _schema("bool", "Overwrite existing resource"),
+			}),
+			_result_schema({
+				"resource_path": _schema("string", "Resolved resource path"),
+				"type": _schema("string", "Created resource class"),
+				"changed": _schema("bool", "Whether resource content changed"),
+				"saved": _schema("bool", "Whether resource save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "ALREADY_EXISTS", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"resource.get",
+			"Get one resource property",
+			_args_schema(["path", "prop"], {
+				"path": _schema("string", "Project-relative resource path"),
+				"prop": _schema("string", "Property name"),
+			}),
+			_result_schema({
+				"resource_path": _schema("string", "Resolved resource path"),
+				"property": _schema("string", "Requested property name"),
+				"value": _schema("any", "Property value payload"),
+				"value_text": _schema("string", "Property value text form"),
+				"value_type": _schema("string", "Property value variant type"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
+		),
+		_tool_definition(
+			"resource.list",
+			"List deterministic resource properties",
+			_args_schema(["path"], {
+				"path": _schema("string", "Project-relative resource path"),
+				"include_values": _schema("bool", "Include serialized property values (defaults to false)"),
+				"max_properties": _schema("int", "Max returned property rows (0 means no limit, default 200)"),
+			}),
+			_result_schema({
+				"resource_path": _schema("string", "Resolved resource path"),
+				"include_values": _schema("bool", "Whether value payloads were included"),
+				"max_properties": _schema("int", "Requested max properties"),
+				"properties": _schema("array<object>", "Sorted resource property rows"),
+				"count": _schema("int", "Property count"),
+				"returned_count": _schema("int", "Returned property row count"),
+				"truncated": _schema("bool", "Whether property rows were truncated by limit"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
+		),
+		_tool_definition(
+			"resource.set_prop",
+			"Set one resource property",
+			_args_schema(["path", "prop", "value_json"], {
+				"path": _schema("string", "Project-relative resource path"),
+				"prop": _schema("string", "Property name"),
+				"value_json": _schema("string", "JSON primitive or typed object payload"),
+			}),
+			_result_schema({
+				"resource_path": _schema("string", "Resolved resource path"),
+				"property": _schema("string", "Updated property name"),
+				"changed": _schema("bool", "Whether property value changed"),
+				"saved": _schema("bool", "Whether resource save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
 			"resource.refs",
 			"List reverse references to one resource",
 			_args_schema(["path"], {
@@ -227,6 +296,83 @@ func _build_definitions() -> Array:
 				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
 			}),
 			_error_schema(["INVALID_ARGS", "NOT_FOUND", "ALREADY_EXISTS", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.duplicate_node",
+			"Duplicate one node under a parent",
+			_args_schema(["scene_path", "node_path", "parent_path"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"node_path": _schema("string", "Source node path"),
+				"parent_path": _schema("string", "Parent node path for the duplicate"),
+				"name": _schema("string", "Optional duplicate node name override"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"source_path": _schema("string", "Canonical source node path"),
+				"parent_path": _schema("string", "Canonical parent node path"),
+				"node_path": _schema("string", "Canonical created node path"),
+				"name": _schema("string", "Created node name"),
+				"name_collision": _schema("bool", "Whether name was auto-adjusted to avoid collision"),
+				"changed": _schema("bool", "Whether scene content changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.group_add",
+			"Add node membership to one group",
+			_args_schema(["scene_path", "node_path", "group"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"node_path": _schema("string", "Node path"),
+				"group": _schema("string", "Group name"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"node_path": _schema("string", "Canonical node path"),
+				"group": _schema("string", "Group name"),
+				"changed": _schema("bool", "Whether group membership changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.group_list",
+			"List deterministic group memberships",
+			_args_schema(["scene_path"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"node_path": _schema("string", "Optional node path scope"),
+				"max": _schema("int", "Max returned rows (0 means no limit, default 0)"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"node_path": _schema("string", "Applied node path scope"),
+				"max": _schema("int", "Requested max rows"),
+				"groups": _schema("array<object>", "Sorted group membership rows"),
+				"count": _schema("int", "Total matching row count"),
+				"returned_count": _schema("int", "Returned row count"),
+				"truncated": _schema("bool", "Whether rows were truncated by max"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.group_remove",
+			"Remove node membership from one group",
+			_args_schema(["scene_path", "node_path", "group"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"node_path": _schema("string", "Node path"),
+				"group": _schema("string", "Group name"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"node_path": _schema("string", "Canonical node path"),
+				"group": _schema("string", "Group name"),
+				"changed": _schema("bool", "Whether group membership changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
 		),
 		_tool_definition(
 			"scene.create",
@@ -278,6 +424,84 @@ func _build_definitions() -> Array:
 			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
 		),
 		_tool_definition(
+			"scene.instance_scene",
+			"Instance another scene as a child node",
+			_args_schema(["scene_path", "source_scene_path", "parent_path"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"source_scene_path": _schema("string", "Source scene .tscn path to instance"),
+				"parent_path": _schema("string", "Parent node path for the instance"),
+				"name": _schema("string", "Optional created node name override"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"source_scene_path": _schema("string", "Resolved source scene path"),
+				"parent_path": _schema("string", "Canonical parent node path"),
+				"node_path": _schema("string", "Canonical created node path"),
+				"name": _schema("string", "Created node name"),
+				"name_collision": _schema("bool", "Whether name was auto-adjusted to avoid collision"),
+				"changed": _schema("bool", "Whether scene content changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.node_configure",
+			"Apply deterministic multi-property node config",
+			_args_schema(["scene_path", "node_path", "config_json"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"node_path": _schema("string", "Node path"),
+				"config_json": _schema("string", "JSON object mapping property names to values"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"node_path": _schema("string", "Canonical node path"),
+				"properties": _schema("array<object>", "Sorted property update rows"),
+				"changed": _schema("bool", "Whether any property changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.rename_node",
+			"Rename one scene node",
+			_args_schema(["scene_path", "node_path", "name"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"node_path": _schema("string", "Node path"),
+				"name": _schema("string", "New node name"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"node_path": _schema("string", "Canonical node path after rename"),
+				"name": _schema("string", "New node name"),
+				"changed": _schema("bool", "Whether node name changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "ALREADY_EXISTS", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.reparent_node",
+			"Move one node under a different parent",
+			_args_schema(["scene_path", "node_path", "parent_path"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"node_path": _schema("string", "Node path to move"),
+				"parent_path": _schema("string", "New parent node path"),
+				"index": _schema("int", "Optional destination child index"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"node_path": _schema("string", "Canonical moved node path"),
+				"parent_path": _schema("string", "Canonical parent node path"),
+				"index": _schema("int", "Final child index under parent"),
+				"changed": _schema("bool", "Whether node parent/index changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "ALREADY_EXISTS", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
 			"scene.remove_node",
 			"Remove a node and save scene",
 			_args_schema(["scene_path", "node_path"], {
@@ -293,6 +517,79 @@ func _build_definitions() -> Array:
 			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
 		),
 		_tool_definition(
+			"scene.signal_connect",
+			"Connect one in-scene signal target",
+			_args_schema(["scene_path", "from_node", "signal", "to_target", "method"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"from_node": _schema("string", "Canonical source node path"),
+				"signal": _schema("string", "Signal name"),
+				"to_target": _schema("string", "Canonical in-scene target node path"),
+				"method": _schema("string", "Target method name"),
+				"flags": _schema("int", "Optional connection flags filter"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"from_node": _schema("string", "Canonical source node path"),
+				"signal": _schema("string", "Signal name"),
+				"to_target": _schema("string", "Canonical target node path"),
+				"method": _schema("string", "Target method name"),
+				"flags": _schema("int", "Connection flags"),
+				"changed": _schema("bool", "Whether connection changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "ALREADY_EXISTS", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.signal_disconnect",
+			"Disconnect one in-scene signal target",
+			_args_schema(["scene_path", "from_node", "signal", "to_target", "method"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"from_node": _schema("string", "Canonical source node path"),
+				"signal": _schema("string", "Signal name"),
+				"to_target": _schema("string", "Canonical in-scene target node path"),
+				"method": _schema("string", "Target method name"),
+				"flags": _schema("int", "Connection flags (defaults to 0)"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"from_node": _schema("string", "Canonical source node path"),
+				"signal": _schema("string", "Signal name"),
+				"to_target": _schema("string", "Canonical target node path"),
+				"method": _schema("string", "Target method name"),
+				"flags": _schema("int", "Connection flags"),
+				"changed": _schema("bool", "Whether connection changed"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.signal_list",
+			"List deterministic signal connections",
+			_args_schema(["scene_path"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"from_node": _schema("string", "Optional source node path filter"),
+				"signal": _schema("string", "Optional signal name filter"),
+				"to_target": _schema("string", "Optional target node path filter"),
+				"method": _schema("string", "Optional method name filter"),
+				"max": _schema("int", "Max returned rows (0 means no limit, default 0)"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"from_node": _schema("string", "Applied source node filter"),
+				"signal": _schema("string", "Applied signal filter"),
+				"to_target": _schema("string", "Applied target node filter"),
+				"method": _schema("string", "Applied method filter"),
+				"max": _schema("int", "Requested max rows"),
+				"connections": _schema("array<object>", "Sorted signal connection rows"),
+				"count": _schema("int", "Total matching row count"),
+				"returned_count": _schema("int", "Returned row count"),
+				"truncated": _schema("bool", "Whether rows were truncated by max"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
+		),
+		_tool_definition(
 			"scene.set_prop",
 			"Set one node property and save scene",
 			_args_schema(["scene_path", "node_path", "property", "value_json"], {
@@ -305,6 +602,24 @@ func _build_definitions() -> Array:
 				"scene_path": _schema("string", "Resolved scene path"),
 				"node_path": _schema("string", "Canonical node path"),
 				"property": _schema("string", "Updated property name"),
+				"saved": _schema("bool", "Whether scene save completed"),
+				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"scene.transform_apply",
+			"Apply minimal transform properties to node",
+			_args_schema(["scene_path", "node_path", "value_json"], {
+				"scene_path": _schema("string", "Scene .tscn path"),
+				"node_path": _schema("string", "Node path"),
+				"value_json": _schema("string", "JSON object with transform property values"),
+			}),
+			_result_schema({
+				"scene_path": _schema("string", "Resolved scene path"),
+				"node_path": _schema("string", "Canonical node path"),
+				"properties": _schema("array<object>", "Sorted transform property update rows"),
+				"changed": _schema("bool", "Whether any property changed"),
 				"saved": _schema("bool", "Whether scene save completed"),
 				"filesystem_refreshed": _schema("bool", "Whether filesystem refresh completed"),
 			}),

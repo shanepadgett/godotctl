@@ -112,6 +112,162 @@ Use project-relative paths for command flags that take a project path (for examp
 - Example:
   - `godotctl scene remove-node --scene scenes/player.tscn --path Sprite2D`
 
+### `godotctl scene rename`
+
+- What it does:
+  - Loads a scene, renames one node by path, and saves the scene.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--path <NodePath>`: Node path to rename.
+  - `--name <NodeName>`: New node name.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene rename --scene scenes/player.tscn --path Sprite2D --name PlayerSprite`
+
+### `godotctl scene reparent`
+
+- What it does:
+  - Loads a scene, moves one node under a new parent path, and saves the scene.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--path <NodePath>`: Node path to move.
+  - `--parent <NodePath>`: Destination parent node path.
+  - `--index <int>`: Optional destination child index under the parent.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene reparent --scene scenes/player.tscn --path Sprite2D --parent .`
+
+### `godotctl scene duplicate`
+
+- What it does:
+  - Loads a scene, duplicates one source node under a parent path, and saves the scene.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--path <NodePath>`: Source node path to duplicate.
+  - `--parent <NodePath>`: Parent node path for the duplicate.
+  - `--name <NodeName>`: Optional duplicate node name override.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene duplicate --scene scenes/player.tscn --path Sprite2D --parent .`
+
+### `godotctl scene instance-scene`
+
+- What it does:
+  - Loads a scene, instances another scene under a parent path, and saves the scene.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--source-scene <path>`: Source `.tscn` path to instance.
+  - `--parent <NodePath>`: Parent node path for the instanced root.
+  - `--name <NodeName>`: Optional created node name override.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene instance-scene --scene scenes/player.tscn --source-scene scenes/effects/hit.tscn --parent .`
+
+### `godotctl scene signal connect`
+
+- What it does:
+  - Loads a scene, connects one signal from a source node to an in-scene target node method, and saves the scene.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--from <NodePath>`: Source node path.
+  - `--signal <SignalName>`: Signal name.
+  - `--to <NodePath>`: Target node path.
+  - `--method <MethodName>`: Target method name.
+  - `--flags <int>`: Optional connection flags.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene signal connect --scene scenes/player.tscn --from . --signal ready --to . --method _on_ready`
+
+### `godotctl scene signal disconnect`
+
+- What it does:
+  - Loads a scene, disconnects one signal target method, and saves the scene when changed.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--from <NodePath>`: Source node path.
+  - `--signal <SignalName>`: Signal name.
+  - `--to <NodePath>`: Target node path.
+  - `--method <MethodName>`: Target method name.
+  - `--flags <int>`: Optional connection flags filter.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene signal disconnect --scene scenes/player.tscn --from . --signal ready --to . --method _on_ready`
+
+### `godotctl scene signal list`
+
+- What it does:
+  - Loads a scene and returns deterministic in-scene signal connection rows.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--from <NodePath>`: Optional source node path filter.
+  - `--signal <SignalName>`: Optional signal name filter.
+  - `--to <NodePath>`: Optional target node path filter.
+  - `--method <MethodName>`: Optional method name filter.
+  - `--max <int>`: Max returned connection rows (`0` means no limit).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene signal list --scene scenes/player.tscn --json`
+
+### `godotctl scene group add`
+
+- What it does:
+  - Loads a scene, adds one node to one group, and saves the scene when changed.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--path <NodePath>`: Node path.
+  - `--group <GroupName>`: Group name.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene group add --scene scenes/player.tscn --path . --group player`
+
+### `godotctl scene group remove`
+
+- What it does:
+  - Loads a scene, removes one node from one group, and saves the scene when changed.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--path <NodePath>`: Node path.
+  - `--group <GroupName>`: Group name.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene group remove --scene scenes/player.tscn --path . --group player`
+
+### `godotctl scene group list`
+
+- What it does:
+  - Loads a scene and returns deterministic group membership rows.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--path <NodePath>`: Optional node path scope.
+  - `--max <int>`: Max returned rows (`0` means no limit).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene group list --scene scenes/player.tscn --json`
+
+### `godotctl scene transform apply`
+
+- What it does:
+  - Loads a scene, applies a JSON transform object to one node, and saves the scene when changed.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--path <NodePath>`: Node path.
+  - `--value <json>`: Transform JSON object.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene transform apply --scene scenes/player.tscn --path . --value '{"position":{"type":"Vector2","x":10,"y":20}}'`
+
+### `godotctl scene node configure`
+
+- What it does:
+  - Loads a scene, applies a JSON property map to one node, and saves the scene when changed.
+- Flags:
+  - `--scene <path>`: Scene path (project-relative `.tscn` path).
+  - `--path <NodePath>`: Node path.
+  - `--config <json>`: JSON object mapping property names to values.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl scene node configure --scene scenes/player.tscn --path . --config '{"visible":true}'`
+
 ### `godotctl scene set-prop`
 
 - What it does:
@@ -265,6 +421,53 @@ Use project-relative paths for command flags that take a project path (for examp
 - Example:
   - `godotctl project graph --json`
   - `godotctl project graph --prefix scenes/stress --include-edges --max-edges 200 --json`
+
+### `godotctl resource create`
+
+- What it does:
+  - Creates a resource file from one Resource class type.
+- Flags:
+  - `--path <path>`: Project-relative resource path to create.
+  - `--type <ClassName>`: Resource class to instantiate.
+  - `--overwrite`: Overwrite existing file at target path.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl resource create --path data/player.tres --type Resource`
+
+### `godotctl resource get`
+
+- What it does:
+  - Loads one resource and returns one property value.
+- Flags:
+  - `--path <path>`: Project-relative resource path.
+  - `--prop <Property>`: Property name.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl resource get --path data/player.tres --prop resource_name --json`
+
+### `godotctl resource set-prop`
+
+- What it does:
+  - Loads one resource, sets one property from JSON input, and saves when changed.
+- Flags:
+  - `--path <path>`: Project-relative resource path.
+  - `--prop <Property>`: Property name to set.
+  - `--value <json>`: JSON primitive or typed object payload.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl resource set-prop --path data/player.tres --prop resource_name --value '"Player"'`
+
+### `godotctl resource list`
+
+- What it does:
+  - Loads one resource and returns deterministic property rows.
+- Flags:
+  - `--path <path>`: Project-relative resource path.
+  - `--include-values`: Include serialized property values.
+  - `--max-properties <int>`: Max returned property rows (`0` means no limit, default `200`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+- Example:
+  - `godotctl resource list --path data/player.tres --include-values --json`
 
 ### `godotctl resource refs`
 

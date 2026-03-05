@@ -6,8 +6,20 @@ const TOOLS_DESCRIBE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/mis
 const CLASS_DESCRIBE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/class/describe_tool.gd")
 const SCENE_CREATE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/create_tool.gd")
 const SCENE_ADD_NODE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/add_node_tool.gd")
+const SCENE_RENAME_NODE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/rename_node_tool.gd")
+const SCENE_REPARENT_NODE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/reparent_node_tool.gd")
+const SCENE_DUPLICATE_NODE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/duplicate_node_tool.gd")
+const SCENE_INSTANCE_SCENE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/instance_scene_tool.gd")
 const SCENE_REMOVE_NODE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/remove_node_tool.gd")
+const SCENE_SIGNAL_CONNECT_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/signal_connect_tool.gd")
+const SCENE_SIGNAL_DISCONNECT_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/signal_disconnect_tool.gd")
+const SCENE_SIGNAL_LIST_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/signal_list_tool.gd")
+const SCENE_GROUP_ADD_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/group_add_tool.gd")
+const SCENE_GROUP_REMOVE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/group_remove_tool.gd")
+const SCENE_GROUP_LIST_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/group_list_tool.gd")
 const SCENE_SET_PROP_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/set_prop_tool.gd")
+const SCENE_TRANSFORM_APPLY_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/transform_apply_tool.gd")
+const SCENE_NODE_CONFIGURE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/node_configure_tool.gd")
 const SCENE_TREE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/tree_tool.gd")
 const SCENE_INSPECT_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/scene/inspect_tool.gd")
 const SCRIPT_CREATE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/script/create_tool.gd")
@@ -19,6 +31,10 @@ const PROJECT_INPUT_MAP_GET_TOOL_SCRIPT := preload("res://addons/godot_bridge/to
 const PROJECT_GRAPH_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/project/graph_tool.gd")
 const FILE_LIST_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/file/list_tool.gd")
 const FILE_READ_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/file/read_tool.gd")
+const RESOURCE_CREATE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resource/create_tool.gd")
+const RESOURCE_GET_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resource/get_tool.gd")
+const RESOURCE_SET_PROP_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resource/set_prop_tool.gd")
+const RESOURCE_LIST_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resource/list_tool.gd")
 const RESOURCE_REFS_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resource/refs_tool.gd")
 
 
@@ -29,8 +45,20 @@ func instantiate_tools() -> Array[RefCounted]:
 		CLASS_DESCRIBE_TOOL_SCRIPT.new(),
 		SCENE_CREATE_TOOL_SCRIPT.new(),
 		SCENE_ADD_NODE_TOOL_SCRIPT.new(),
+		SCENE_RENAME_NODE_TOOL_SCRIPT.new(),
+		SCENE_REPARENT_NODE_TOOL_SCRIPT.new(),
+		SCENE_DUPLICATE_NODE_TOOL_SCRIPT.new(),
+		SCENE_INSTANCE_SCENE_TOOL_SCRIPT.new(),
 		SCENE_REMOVE_NODE_TOOL_SCRIPT.new(),
+		SCENE_SIGNAL_CONNECT_TOOL_SCRIPT.new(),
+		SCENE_SIGNAL_DISCONNECT_TOOL_SCRIPT.new(),
+		SCENE_SIGNAL_LIST_TOOL_SCRIPT.new(),
+		SCENE_GROUP_ADD_TOOL_SCRIPT.new(),
+		SCENE_GROUP_REMOVE_TOOL_SCRIPT.new(),
+		SCENE_GROUP_LIST_TOOL_SCRIPT.new(),
 		SCENE_SET_PROP_TOOL_SCRIPT.new(),
+		SCENE_TRANSFORM_APPLY_TOOL_SCRIPT.new(),
+		SCENE_NODE_CONFIGURE_TOOL_SCRIPT.new(),
 		SCENE_TREE_TOOL_SCRIPT.new(),
 		SCENE_INSPECT_TOOL_SCRIPT.new(),
 		SCRIPT_CREATE_TOOL_SCRIPT.new(),
@@ -42,5 +70,9 @@ func instantiate_tools() -> Array[RefCounted]:
 		PROJECT_GRAPH_TOOL_SCRIPT.new(),
 		FILE_LIST_TOOL_SCRIPT.new(),
 		FILE_READ_TOOL_SCRIPT.new(),
+		RESOURCE_CREATE_TOOL_SCRIPT.new(),
+		RESOURCE_GET_TOOL_SCRIPT.new(),
+		RESOURCE_SET_PROP_TOOL_SCRIPT.new(),
+		RESOURCE_LIST_TOOL_SCRIPT.new(),
 		RESOURCE_REFS_TOOL_SCRIPT.new(),
 	]

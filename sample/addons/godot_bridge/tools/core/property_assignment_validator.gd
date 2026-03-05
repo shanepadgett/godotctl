@@ -22,7 +22,7 @@ func validate(target: Object, property_name: String, value: Variant) -> Dictiona
 
 	var expected_type := int(property_info.get("type", TYPE_NIL))
 	var incoming_type := typeof(value)
-	if not _is_assignable_type(expected_type, incoming_type):
+	if not _is_assignable(expected_type, incoming_type, value):
 		return _result.error(
 			_errors.TYPE_MISMATCH,
 			"property %s expects %s but got %s" % [
@@ -46,7 +46,7 @@ func _property_info(target: Object, property_name: String) -> Dictionary:
 	return {}
 
 
-func _is_assignable_type(expected_type: int, incoming_type: int) -> bool:
+func _is_assignable(expected_type: int, incoming_type: int, value: Variant) -> bool:
 	if expected_type == TYPE_NIL:
 		return true
 	if incoming_type == TYPE_NIL:
@@ -54,6 +54,8 @@ func _is_assignable_type(expected_type: int, incoming_type: int) -> bool:
 	if expected_type == incoming_type:
 		return true
 
+	if expected_type == TYPE_INT and incoming_type == TYPE_FLOAT:
+		return _is_integer_like(float(value))
 	if expected_type == TYPE_FLOAT and incoming_type == TYPE_INT:
 		return true
 	if expected_type == TYPE_STRING_NAME and incoming_type == TYPE_STRING:
@@ -62,3 +64,9 @@ func _is_assignable_type(expected_type: int, incoming_type: int) -> bool:
 		return true
 
 	return false
+
+
+func _is_integer_like(number: float) -> bool:
+	if not is_finite(number):
+		return false
+	return is_equal_approx(number, round(number))

@@ -46,12 +46,90 @@ This roadmap intentionally focuses on platform capabilities, not genre templates
 
 ## Milestone 2 - Scene and Resource Authoring Breadth
 
-- [ ] Add scene graph operations: rename, reparent, duplicate, instance-scene.
-- [ ] Add signal wiring operations: `scene signal connect`, `scene signal disconnect`, `scene signal list`.
-- [ ] Define deterministic signal identity tuple `(scene_path, from_node, signal, to_target, method, flags)` and idempotent semantics.
-- [ ] Add group membership operations: add/remove/list.
-- [ ] Add transform and common node configuration helpers.
-- [ ] Add resource operations: create/get/set-prop/list where deterministic.
+- [x] Keep CLI and tool contracts deterministic: stable envelopes, stable tool codes, stable ordering.
+
+### 2.1) Command Surface (CLI -> Tool)
+
+- [x] Scene graph operations:
+  - `scene rename --scene --path --name` -> `scene.rename_node`
+  - `scene reparent --scene --path --parent [--index <int>]` -> `scene.reparent_node`
+  - `scene duplicate --scene --path --parent [--name <string>]` -> `scene.duplicate_node`
+  - `scene instance-scene --scene --source-scene --parent [--name <string>]` -> `scene.instance_scene`
+- [x] Signal wiring operations:
+  - `scene signal connect --scene --from --signal --to --method [--flags <int>]` -> `scene.signal_connect`
+  - `scene signal disconnect --scene --from --signal --to --method [--flags <int>]` -> `scene.signal_disconnect`
+  - `scene signal list --scene [--from] [--signal] [--to] [--method] [--max <int>]` -> `scene.signal_list`
+- [x] Group membership operations:
+  - `scene group add --scene --path --group` -> `scene.group_add`
+  - `scene group remove --scene --path --group` -> `scene.group_remove`
+  - `scene group list --scene [--path] [--max <int>]` -> `scene.group_list`
+- [x] Transform/configuration helpers:
+  - `scene transform apply --scene --path --value <json>` -> `scene.transform_apply`
+  - `scene node configure --scene --path --config <json>` -> `scene.node_configure`
+- [x] Resource operations:
+  - `resource create --path --type [--overwrite]` -> `resource.create`
+  - `resource get --path --prop` -> `resource.get`
+  - `resource set-prop --path --prop --value <json>` -> `resource.set_prop`
+  - `resource list --path [--include-values] [--max-properties <int>]` -> `resource.list`
+
+### 2.2) Deterministic Contracts
+
+- [x] Use canonical scene/resource paths and canonical node paths (`.` for root).
+- [x] Define deterministic signal identity tuple `(scene_path, from_node, signal, to_target, method, flags)`.
+- [x] Sort signal list responses lexicographically by the identity tuple field order.
+- [x] Keep signal and group mutation idempotent:
+  - connect/add existing -> success with `changed: false`
+  - disconnect/remove missing -> success with `changed: false`
+- [x] Initial signal target scope is in-scene node-path targets only; reject non-deterministic external object references.
+- [x] Keep max-limit behavior deterministic (`0` means no limit, return truncation metadata when truncated).
+
+### 2.3) Result Shapes
+
+- [x] Mutation responses include stable fields:
+  - `scene_path` or `resource_path`
+  - operation-specific canonical paths/keys
+  - `changed`, `saved`, `filesystem_refreshed`
+- [x] List/read responses include deterministic arrays and stable counters:
+  - `count`, `returned_count`, `truncated`
+- [x] Duplicate/instance/create responses include created canonical path/name and collision outcome.
+
+### 2.4) Error Taxonomy (Reuse Existing Codes)
+
+- [x] Keep existing tool code set only: `INVALID_ARGS`, `NOT_FOUND`, `ALREADY_EXISTS`, `TYPE_MISMATCH`, `IO_ERROR`, `EDITOR_STATE`, `INTERNAL`.
+- [x] Error mapping rules:
+  - `INVALID_ARGS`: invalid names, invalid flags, root-op restrictions, reparent cycles, invalid target scope.
+  - `NOT_FOUND`: missing scene/node/signal/group/resource/property/method.
+  - `ALREADY_EXISTS`: sibling name collisions, create without overwrite.
+  - `TYPE_MISMATCH`: incompatible class/value/method target.
+  - `IO_ERROR`: load/pack/save failures.
+  - `EDITOR_STATE`: editor refresh/open failures after mutation.
+
+### 2.5) Implementation Layout
+
+- [x] CLI command wiring under `internal/cli/commands/scene/` and `internal/cli/commands/resource/`.
+- [x] Plugin handlers under `addons/godot_bridge/tools/scene/` and `addons/godot_bridge/tools/resource/`.
+- [x] Register all new tools in `addons/godot_bridge/tools/registry.gd`.
+- [x] Define/update machine-readable contracts in `addons/godot_bridge/tools/misc/describe_tool.gd`.
+- [x] Reuse shared load/mutate/save/finalize patterns used by existing scene/script tooling.
+- [x] Keep plugin source of truth in `addons/godot_bridge/` and mirror to `sample/addons/godot_bridge/` after implementation.
+
+### 2.6) Delivery Phases
+
+- [x] Phase A: shared canonicalization helpers + schema stubs.
+- [x] Phase B: scene graph operations.
+- [x] Phase C: signal list/connect/disconnect with identity tuple + idempotency.
+- [x] Phase D: group add/remove/list.
+- [x] Phase E: transform/configuration helpers (minimal common subset only).
+- [x] Phase F: resource create/get/set-prop/list.
+- [x] Phase G: deterministic regression checks + docs sync.
+
+### 2.7) Milestone 2 Exit Criteria
+
+- [x] All Milestone 2 commands are available in CLI, registry, and `tools describe`.
+- [x] All list-like responses are deterministically sorted and diff-safe.
+- [x] Signal/group idempotent semantics are implemented and documented.
+- [x] Stable envelope + exit-code behavior remains unchanged.
+- [x] `docs/DOCUMENTATION.md` is updated for every command/flag in this milestone.
 
 ## Milestone 3 - Project Mutation and Data Operations
 
@@ -115,7 +193,8 @@ These are release-hardening tasks and should land after core capabilities above.
 
 ## 6) Immediate Next Action
 
-- [ ] Start Milestone 2 signal tooling design (command contracts, identity tuple, error taxonomy).
+- [x] Start Milestone 2 Phase A: add schema stubs + registry placeholders for all planned Milestone 2 tools.
+- [x] Implement Milestone 2 Phase B and Phase C first (scene graph + signal wiring).
 - [ ] Define Milestone 5 signal validation contract and deterministic diagnostic key format.
 
 ## 7) Signal Validation Gating
