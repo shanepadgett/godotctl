@@ -1,17 +1,16 @@
 # Agent Notes
 
-This repo keeps two plugin copies during local testing:
+This repo uses a single Godot project at the repository root:
 
-- Source of truth: `addons/godot_bridge/`
-- Test copy: `sample/addons/godot_bridge/`
+- Godot project root: `.`
+- Plugin source/test location: `addons/godot_bridge/`
+- CLI source module: `cli/` (`cli/go.mod`)
 
 When updating plugin code:
 
 1. Edit files in `addons/godot_bridge/`.
-2. Copy that folder to `sample/addons/godot_bridge/` (overwrite existing files).
+2. Rebuild the CLI binary with `mise run build` when needed.
 3. Restart Godot (or disable/enable plugin) to reload scripts.
-
-Do not use symlinks for the sample plugin copy; use a real folder copy.
 
 > **IMPORTANT**: When running commands for this repo, always use Bash, NEVER PowerShell.
 
@@ -20,6 +19,7 @@ Do not use symlinks for the sample plugin copy; use a real folder copy.
 - For live CLI validation, run the built CLI directly from `bin/godotctl.exe` (for example, `./bin/godotctl.exe status --json`).
 - Do not use `mise run cli --` for live validation commands.
 - If the binary is missing or stale, rebuild with `mise run build` first.
+- `mise` Go tasks target the module in `cli/`.
 
 ## Planning
 

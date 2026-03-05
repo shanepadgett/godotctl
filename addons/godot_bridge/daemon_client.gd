@@ -392,8 +392,74 @@ func _maybe_watchdog_start_daemon() -> void:
 
 
 func _daemon_candidates() -> Array[String]:
-	var plugin_binary := ProjectSettings.globalize_path("res://addons/godot_bridge/bin/godotctl.exe")
-	return [plugin_binary, "godotctl.exe", "godotctl"]
+	var candidates: Array[String] = []
+	_append_resolved_command_candidate(candidates, "godotctl.exe")
+	_append_resolved_command_candidate(candidates, "godotctl")
+	_append_existing_command_candidate(candidates, ProjectSettings.globalize_path("res://bin/godotctl.exe"))
+	_append_existing_command_candidate(candidates, ProjectSettings.globalize_path("res://bin/godotctl"))
+	return candidates
+
+
+func _append_resolved_command_candidate(candidates: Array[String], executable: String) -> void:
+	var resolved := _resolve_command_from_path(executable)
+	if resolved.is_empty():
+		return
+	_append_existing_command_candidate(candidates, resolved)
+
+
+func _append_existing_command_candidate(candidates: Array[String], executable: String) -> void:
+	if executable.is_empty():
+		return
+	if not FileAccess.file_exists(executable):
+		return
+	if candidates.has(executable):
+		return
+	candidates.append(executable)
+
+
+func _resolve_command_from_path(executable: String) -> String:
+	var path_env := OS.get_environment("PATH").strip_edges()
+	if path_env.is_empty():
+		return ""
+
+	var path_separator := ":"
+	if OS.has_feature("windows"):
+		path_separator = ";"
+
+	for directory in path_env.split(path_separator, false):
+		var trimmed_directory := directory.strip_edges()
+		if trimmed_directory.is_empty():
+			continue
+
+		for lookup_name in _path_lookup_names(executable):
+			var candidate := trimmed_directory.path_join(lookup_name)
+			if FileAccess.file_exists(candidate):
+				return candidate
+
+	return ""
+
+
+func _path_lookup_names(executable: String) -> Array[String]:
+	var names: Array[String] = [executable]
+	if not OS.has_feature("windows"):
+		return names
+	if executable.contains("."):
+		return names
+
+	var pathext_env := OS.get_environment("PATHEXT").strip_edges()
+	if pathext_env.is_empty():
+		pathext_env = ".COM;.EXE;.BAT;.CMD"
+
+	for extension in pathext_env.split(";", false):
+		var trimmed_extension := extension.strip_edges()
+		if trimmed_extension.is_empty():
+			continue
+		var lookup_name := executable + trimmed_extension
+		if names.has(lookup_name):
+			continue
+		names.append(lookup_name)
+
+	return names
 
 
 func _maybe_stop_owned_daemon() -> void:

@@ -7,32 +7,36 @@ golangci-lint = "latest"
 _.file = ".env"
 
 [tasks.build]
-description = "Build CLI and copy into addon bin"
+description = "Build CLI into root bin"
 shell = "bash -lc"
-run = "mkdir -p bin addons/godot_bridge/bin && go build -o bin/godotctl.exe ./cmd/godotctl && cp bin/godotctl.exe addons/godot_bridge/bin/godotctl.exe"
+run = '''set -euo pipefail
+mkdir -p bin
+if [ -f bin/godotctl.exe ]; then
+  ./bin/godotctl.exe daemon stop >/dev/null 2>&1 || true
+  sleep 0.2
+fi
+go -C cli build -o ../bin/godotctl.exe ./cmd/godotctl'''
 
 [tasks.validate]
 description = "Run full Go validation (fmt, test, vet, lint, deadcode)"
 shell = "bash -lc"
 run = '''set -euo pipefail
-go fmt ./...
-go test ./...
-go vet ./...
-golangci-lint run
-deadcode -test ./...'''
+go -C cli fmt ./...
+go -C cli test ./...
+go -C cli vet ./...
+(
+  cd cli
+  golangci-lint run ./...
+  deadcode -test ./...
+)'''
 
 [tasks.cli]
 description = "Run godotctl via go run (pass args after --)"
-run = "go run ./cmd/godotctl"
+run = "go -C cli run ./cmd/godotctl"
 
-[tasks.copy-addon]
-description = "Copy addon into sample project"
-shell = "bash -lc"
-run = "rm -rf sample/addons/godot_bridge && mkdir -p sample/addons && cp -R addons/godot_bridge sample/addons/"
-
-[tasks.launch-sample]
-description = "Build, copy addon, and launch sample in Godot 4.6"
-depends = ["build", "copy-addon"]
+[tasks.launch-editor]
+description = "Build and launch root project in Godot 4.6"
+depends = ["build"]
 shell = "bash -lc"
 run = '''if [ -z "${GODOT46_EXE:-}" ]; then printf "Set GODOT46_EXE to your Godot 4.6 executable path.\n"; exit 1; fi
 exe="$GODOT46_EXE"
@@ -43,11 +47,11 @@ if [ ! -f "$exe" ]; then
   printf "GODOT46_EXE does not point to a file: %s\n" "$exe"
   exit 1
 fi
-"$exe" --editor --path sample'''
+"$exe" --editor --path .'''
 
-[tasks.launch-sample-detached]
-description = "Build, copy addon, and launch sample detached"
-depends = ["build", "copy-addon"]
+[tasks.launch-editor-detached]
+description = "Build and launch root project detached"
+depends = ["build"]
 shell = "bash -lc"
 run = '''if [ -z "${GODOT46_EXE:-}" ]; then printf "Set GODOT46_EXE to your Godot 4.6 executable path.\n"; exit 1; fi
 exe="$GODOT46_EXE"
@@ -58,5 +62,5 @@ if [ ! -f "$exe" ]; then
   printf "GODOT46_EXE does not point to a file: %s\n" "$exe"
   exit 1
 fi
-"$exe" --editor --path sample >/dev/null 2>&1 &
+"$exe" --editor --path . >/dev/null 2>&1 &
 printf "launched Godot in background (pid=%s)\n" "$!"'''

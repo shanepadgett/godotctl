@@ -45,11 +45,14 @@ $RECYCLE.BIN/
 *.test
 *.out
 vendor/
-go.work
 
 # Binaries
 /bin/
 /dist/
+/cli/bin/
+/cli/dist/
+/cli/coverage.out
+/cli/*.coverprofile
 
 # IDE
 .idea/

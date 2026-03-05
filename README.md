@@ -8,9 +8,16 @@
 - Go 1.25.x (managed via `mise` in this repo)
 - Godot 4.6 / 4.6.1
 
+## Repository Layout
+
+- Repo root is the Godot project (`project.godot`) used for addon development and testing.
+- Plugin source of truth: `addons/godot_bridge/`.
+- CLI Go module: `cli/` (`cli/go.mod`).
+- Built CLI binary: `bin/godotctl.exe`.
+
 ## Install (User)
 
-Build the CLI and bundled plugin binary:
+Build the CLI binary:
 
 ```bash
 mise run build
@@ -21,6 +28,7 @@ Copy `addons/godot_bridge/` into your Godot project.
 Open the project in Godot and enable the plugin in `Project Settings -> Plugins`.
 
 The plugin will try to connect to a local daemon and can auto-start it if available.
+Auto-start resolves `godotctl` from PATH first, then falls back to `res://bin/godotctl.exe`.
 
 ## Get Running
 
@@ -40,7 +48,7 @@ bin/godotctl.exe tools ping
 
 ## Development
 
-- Build CLI and copy binary into plugin:
+- Build CLI binary:
 
 ```bash
 mise run build
@@ -52,22 +60,16 @@ mise run build
 mise run validate
 ```
 
-- Copy addon to sample project:
+- Launch root project in the editor:
 
 ```bash
-mise run copy-addon
+mise run launch-editor
 ```
 
-- Launch sample project:
+- Launch root project detached:
 
 ```bash
-mise run launch-sample
-```
-
-- Launch sample detached:
-
-```bash
-mise run launch-sample-detached
+mise run launch-editor-detached
 ```
 
 Set `GODOT46_EXE` before launch (or create a local `.env` from `.env.example`):

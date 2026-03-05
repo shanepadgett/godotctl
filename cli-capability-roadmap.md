@@ -106,12 +106,12 @@ This roadmap intentionally focuses on platform capabilities, not genre templates
 
 ### 2.5) Implementation Layout
 
-- [x] CLI command wiring under `internal/cli/commands/scene/` and `internal/cli/commands/resource/`.
+- [x] CLI command wiring under `cli/internal/cli/commands/scene/` and `cli/internal/cli/commands/resource/`.
 - [x] Plugin handlers under `addons/godot_bridge/tools/scene/` and `addons/godot_bridge/tools/resource/`.
 - [x] Register all new tools in `addons/godot_bridge/tools/registry.gd`.
 - [x] Define/update machine-readable contracts in `addons/godot_bridge/tools/misc/describe_tool.gd`.
 - [x] Reuse shared load/mutate/save/finalize patterns used by existing scene/script tooling.
-- [x] Keep plugin source of truth in `addons/godot_bridge/` and mirror to `sample/addons/godot_bridge/` after implementation.
+- [x] Keep plugin source of truth in `addons/godot_bridge/` in the root Godot project.
 
 ### 2.6) Delivery Phases
 
@@ -189,7 +189,7 @@ These are release-hardening tasks and should land after core capabilities above.
 - Any new mutating command must include deterministic failure codes and stable JSON envelopes.
 - Any list-like response must have deterministic ordering.
 - Any command added/changed/removed must update `docs/DOCUMENTATION.md` in the same change.
-- Plugin source of truth remains `addons/godot_bridge/`, then mirrored to `sample/addons/godot_bridge/`.
+- Plugin source of truth remains `addons/godot_bridge/` in the root Godot project.
 
 ## 6) Immediate Next Action
 
