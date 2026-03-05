@@ -10,14 +10,15 @@
 
 ## Install (User)
 
-1. Build the CLI and bundled plugin binary:
+Build the CLI and bundled plugin binary:
 
 ```bash
 mise run build
 ```
 
-2. Copy `addons/godot_bridge/` into your Godot project.
-3. Open the project in Godot and enable the plugin in `Project Settings -> Plugins`.
+Copy `addons/godot_bridge/` into your Godot project.
+
+Open the project in Godot and enable the plugin in `Project Settings -> Plugins`.
 
 The plugin will try to connect to a local daemon and can auto-start it if available.
 
