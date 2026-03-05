@@ -1,20 +1,21 @@
-package app
+package statuscmd
 
 import (
 	"fmt"
 
+	"github.com/shanepadgett/godotctl/internal/cli/commands/shared"
 	"github.com/shanepadgett/godotctl/internal/cli/output"
 	"github.com/spf13/cobra"
 )
 
-func (a *App) newStatusCommand() *cobra.Command {
+func New(deps shared.Deps) *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
 		Short: "Show daemon and plugin status",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			status, err := a.client.GetStatus(cmd.Context())
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			status, err := deps.Client.GetStatus(cmd.Context())
 			if err != nil {
-				return a.fail(cmd, err)
+				return deps.Fail(cmd, err)
 			}
 
 			text := "daemon: running, plugin: disconnected"
@@ -22,7 +23,7 @@ func (a *App) newStatusCommand() *cobra.Command {
 				text = fmt.Sprintf("daemon: running, plugin: connected (%s)", status.Project)
 			}
 
-			return a.presenter.Success(output.Result{
+			return deps.Success(output.Result{
 				Command: cmd.CommandPath(),
 				Text:    text,
 				Data:    status,

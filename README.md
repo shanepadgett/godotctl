@@ -46,6 +46,12 @@ bin/godotctl.exe tools ping
 mise run build
 ```
 
+- Run full validation (format, tests, vet, lint, deadcode):
+
+```bash
+mise run validate
+```
+
 - Copy addon to sample project:
 
 ```bash

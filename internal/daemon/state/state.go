@@ -1,29 +1,14 @@
-package daemon
+package state
 
 import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/shanepadgett/godotctl/internal/protocol"
 )
 
-type StatusResponse struct {
-	Daemon          bool    `json:"daemon"`
-	PluginConnected bool    `json:"plugin_connected"`
-	Project         string  `json:"project,omitempty"`
-	PendingRequests int     `json:"pending_requests"`
-	ConnectedSince  *string `json:"connected_since"`
-	OwnerToken      string  `json:"owner_token,omitempty"`
-}
-
-type ToolsListResponse struct {
-	Daemon          bool     `json:"daemon"`
-	PluginConnected bool     `json:"plugin_connected"`
-	Project         string   `json:"project,omitempty"`
-	Tools           []string `json:"tools"`
-	OwnerToken      string   `json:"owner_token,omitempty"`
-}
-
-type connectionState struct {
+type Store struct {
 	mu              sync.RWMutex
 	pluginConnected bool
 	project         string
@@ -34,11 +19,11 @@ type connectionState struct {
 	stopFn          context.CancelFunc
 }
 
-func newConnectionState(ownerToken string) *connectionState {
-	return &connectionState{ownerToken: ownerToken}
+func New(ownerToken string) *Store {
+	return &Store{ownerToken: ownerToken}
 }
 
-func (s *connectionState) SetConnected(project string, tools []string) {
+func (s *Store) SetConnected(project string, tools []string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if !s.pluginConnected {
@@ -50,7 +35,7 @@ func (s *connectionState) SetConnected(project string, tools []string) {
 	s.tools = cloneStrings(tools)
 }
 
-func (s *connectionState) SetDisconnected() {
+func (s *Store) SetDisconnected() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.pluginConnected = false
@@ -60,7 +45,7 @@ func (s *connectionState) SetDisconnected() {
 	s.connectedSince = nil
 }
 
-func (s *connectionState) SetPendingRequests(n int) {
+func (s *Store) SetPendingRequests(n int) {
 	if n < 0 {
 		n = 0
 	}
@@ -70,7 +55,7 @@ func (s *connectionState) SetPendingRequests(n int) {
 	s.pendingRequests = n
 }
 
-func (s *connectionState) Snapshot() StatusResponse {
+func (s *Store) Snapshot() protocol.StatusResponse {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -80,7 +65,7 @@ func (s *connectionState) Snapshot() StatusResponse {
 		connectedSince = &formatted
 	}
 
-	return StatusResponse{
+	return protocol.StatusResponse{
 		Daemon:          true,
 		PluginConnected: s.pluginConnected,
 		Project:         s.project,
@@ -90,11 +75,11 @@ func (s *connectionState) Snapshot() StatusResponse {
 	}
 }
 
-func (s *connectionState) ToolsSnapshot() ToolsListResponse {
+func (s *Store) ToolsSnapshot() protocol.ToolsListResponse {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	return ToolsListResponse{
+	return protocol.ToolsListResponse{
 		Daemon:          true,
 		PluginConnected: s.pluginConnected,
 		Project:         s.project,
@@ -103,19 +88,19 @@ func (s *connectionState) ToolsSnapshot() ToolsListResponse {
 	}
 }
 
-func (s *connectionState) OwnerToken() string {
+func (s *Store) OwnerToken() string {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.ownerToken
 }
 
-func (s *connectionState) SetStopFunc(stopFn context.CancelFunc) {
+func (s *Store) SetStopFunc(stopFn context.CancelFunc) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.stopFn = stopFn
 }
 
-func (s *connectionState) Stop() {
+func (s *Store) Stop() {
 	s.mu.RLock()
 	stopFn := s.stopFn
 	s.mu.RUnlock()
@@ -125,7 +110,7 @@ func (s *connectionState) Stop() {
 	}
 }
 
-func shutdownTimeout() time.Duration {
+func ShutdownTimeout() time.Duration {
 	return 5 * time.Second
 }
 

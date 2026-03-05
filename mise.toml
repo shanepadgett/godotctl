@@ -11,6 +11,16 @@ description = "Build CLI and copy into addon bin"
 shell = "bash -lc"
 run = "mkdir -p bin addons/godot_bridge/bin && go build -o bin/godotctl.exe ./cmd/godotctl && cp bin/godotctl.exe addons/godot_bridge/bin/godotctl.exe"
 
+[tasks.validate]
+description = "Run full Go validation (fmt, test, vet, lint, deadcode)"
+shell = "bash -lc"
+run = '''set -euo pipefail
+go fmt ./...
+go test ./...
+go vet ./...
+golangci-lint run
+deadcode -test ./...'''
+
 [tasks.cli]
 description = "Run godotctl via go run (pass args after --)"
 run = "go run ./cmd/godotctl"

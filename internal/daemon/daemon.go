@@ -4,21 +4,25 @@ import (
 	"context"
 	"fmt"
 	"sync"
+
+	"github.com/shanepadgett/godotctl/internal/daemon/httpserver"
+	daemonstate "github.com/shanepadgett/godotctl/internal/daemon/state"
+	"github.com/shanepadgett/godotctl/internal/daemon/ws"
 )
 
 type Daemon struct {
-	wsServer   *wsServer
-	httpServer *httpServer
-	state      *connectionState
+	wsServer   *ws.Server
+	httpServer *httpserver.Server
+	state      *daemonstate.Store
 	once       sync.Once
 }
 
 func New(wsAddr string, httpAddr string, ownerToken string) *Daemon {
-	state := newConnectionState(ownerToken)
-	ws := newWSServer(wsAddr, state)
+	state := daemonstate.New(ownerToken)
+	wsServer := ws.New(wsAddr, state)
 	return &Daemon{
-		wsServer:   ws,
-		httpServer: newHTTPServer(httpAddr, state, ws),
+		wsServer:   wsServer,
+		httpServer: httpserver.New(httpAddr, state, wsServer),
 		state:      state,
 	}
 }

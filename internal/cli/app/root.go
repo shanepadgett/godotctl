@@ -4,6 +4,14 @@ import (
 	"io"
 
 	"github.com/shanepadgett/godotctl/internal/cli/client"
+	daemoncmd "github.com/shanepadgett/godotctl/internal/cli/commands/daemon"
+	filecmd "github.com/shanepadgett/godotctl/internal/cli/commands/file"
+	projectcmd "github.com/shanepadgett/godotctl/internal/cli/commands/project"
+	scenecmd "github.com/shanepadgett/godotctl/internal/cli/commands/scene"
+	scriptcmd "github.com/shanepadgett/godotctl/internal/cli/commands/script"
+	"github.com/shanepadgett/godotctl/internal/cli/commands/shared"
+	statuscmd "github.com/shanepadgett/godotctl/internal/cli/commands/status"
+	toolscmd "github.com/shanepadgett/godotctl/internal/cli/commands/tools"
 	"github.com/shanepadgett/godotctl/internal/cli/output"
 	"github.com/spf13/cobra"
 )
@@ -40,13 +48,22 @@ func NewRootCommand(stdout io.Writer, stderr io.Writer) *cobra.Command {
 
 	rootCmd.PersistentFlags().BoolVar(&a.jsonMode, "json", false, "Print machine-readable JSON output")
 
-	rootCmd.AddCommand(a.newDaemonCommand())
-	rootCmd.AddCommand(a.newStatusCommand())
-	rootCmd.AddCommand(a.newToolsCommand())
-	rootCmd.AddCommand(a.newSceneCommand())
-	rootCmd.AddCommand(a.newScriptCommand())
-	rootCmd.AddCommand(a.newProjectCommand())
-	rootCmd.AddCommand(a.newFileCommand())
+	deps := shared.Deps{
+		Client: a.client,
+		Presenter: func() output.Presenter {
+			return a.presenter
+		},
+		WSAddr:   defaultWSAddr,
+		HTTPAddr: defaultHTTPAddr,
+	}
+
+	rootCmd.AddCommand(daemoncmd.New(deps))
+	rootCmd.AddCommand(statuscmd.New(deps))
+	rootCmd.AddCommand(toolscmd.New(deps))
+	rootCmd.AddCommand(scenecmd.New(deps))
+	rootCmd.AddCommand(scriptcmd.New(deps))
+	rootCmd.AddCommand(projectcmd.New(deps))
+	rootCmd.AddCommand(filecmd.New(deps))
 
 	return rootCmd
 }
