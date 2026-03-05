@@ -88,6 +88,10 @@ func _send_hello() -> void:
 		"type": "hello",
 		"project": _project_name,
 	}
+	var validation_error := _validate_hello_message(payload)
+	if not validation_error.is_empty():
+		push_warning("godot_bridge: invalid hello payload: %s" % validation_error)
+		return
 	_socket.send_text(JSON.stringify(payload))
 	_hello_sent = true
 	_connecting = false
@@ -100,18 +104,41 @@ func _read_messages() -> void:
 		if typeof(data) != TYPE_DICTIONARY:
 			continue
 
-		if data.get("type", "") == "welcome":
+		var msg_type := str(data.get("type", "")).strip_edges()
+		if msg_type.is_empty():
+			push_warning("godot_bridge: received message without type")
+			continue
+
+		if msg_type == "welcome":
 			_on_connected(data)
 			connected_to_daemon.emit(_project_name)
-		elif data.get("type", "") == "tool_invoke":
+		elif msg_type == "tool_invoke":
 			_handle_tool_invoke(data)
+		elif msg_type == "ping":
+			_socket.send_text(JSON.stringify({"type": "pong"}))
+		elif msg_type == "pong":
+			pass
+		else:
+			push_warning("godot_bridge: ignoring unknown message type: %s" % msg_type)
 
 
 func _handle_tool_invoke(data: Dictionary) -> void:
+	var validation_error := _validate_tool_invoke_message(data)
+	if not validation_error.is_empty():
+		push_warning("godot_bridge: invalid tool_invoke payload: %s" % validation_error)
+		var invalid_request_id := str(data.get("id", ""))
+		if not invalid_request_id.is_empty():
+			_send_tool_result(invalid_request_id, false, {}, "invalid tool_invoke: %s" % validation_error)
+		return
+
 	var request_id := str(data.get("id", ""))
 	var tool := str(data.get("tool", ""))
+	var args = data.get("args", {})
 
 	if request_id.is_empty():
+		return
+	if typeof(args) != TYPE_DICTIONARY:
+		_send_tool_result(request_id, false, {}, "invalid tool_invoke: args must be a dictionary")
 		return
 
 	if tool == "ping":
@@ -134,7 +161,77 @@ func _send_tool_result(request_id: String, ok: bool, result: Dictionary, error_m
 	else:
 		payload["error"] = error_message
 
+	var validation_error := _validate_tool_result_message(payload)
+	if not validation_error.is_empty():
+		push_warning("godot_bridge: invalid tool_result payload: %s" % validation_error)
+		return
+
 	_socket.send_text(JSON.stringify(payload))
+
+
+func _validate_hello_message(data: Dictionary) -> String:
+	if str(data.get("type", "")).strip_edges() != "hello":
+		return "type must be 'hello'"
+
+	if data.has("project") and typeof(data.get("project")) != TYPE_STRING:
+		return "project must be a string"
+
+	if data.has("tools"):
+		if typeof(data.get("tools")) != TYPE_ARRAY:
+			return "tools must be an array"
+		for item in data.get("tools"):
+			if typeof(item) != TYPE_STRING:
+				return "tools entries must be strings"
+
+	return ""
+
+
+func _validate_tool_invoke_message(data: Dictionary) -> String:
+	if str(data.get("type", "")).strip_edges() != "tool_invoke":
+		return "type must be 'tool_invoke'"
+
+	var request_id := str(data.get("id", "")).strip_edges()
+	if request_id.is_empty():
+		return "id is required"
+
+	var tool := str(data.get("tool", "")).strip_edges()
+	if tool.is_empty():
+		return "tool is required"
+
+	if data.has("args") and typeof(data.get("args")) != TYPE_DICTIONARY:
+		return "args must be a dictionary"
+
+	return ""
+
+
+func _validate_tool_result_message(data: Dictionary) -> String:
+	if str(data.get("type", "")).strip_edges() != "tool_result":
+		return "type must be 'tool_result'"
+
+	var request_id := str(data.get("id", "")).strip_edges()
+	if request_id.is_empty():
+		return "id is required"
+
+	if typeof(data.get("ok", null)) != TYPE_BOOL:
+		return "ok must be a bool"
+
+	var ok := bool(data.get("ok", false))
+	var has_result := data.has("result") and typeof(data.get("result")) == TYPE_DICTIONARY
+	var has_error := str(data.get("error", "")).strip_edges() != ""
+
+	if ok:
+		if not has_result:
+			return "result is required when ok=true"
+		if has_error:
+			return "error must be empty when ok=true"
+		return ""
+
+	if not has_error:
+		return "error is required when ok=false"
+	if has_result:
+		return "result must be empty when ok=false"
+
+	return ""
 
 
 func _on_connected(data: Dictionary) -> void:

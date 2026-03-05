@@ -20,7 +20,7 @@
   - Ensure cancelled/expired requests are removed from pending state consistently.
   - Return structured error messages that the CLI can map to the correct exit code.
 
-- [ ] Lock down the daemon-plugin wire protocol before scene tools.
+- [x] Lock down the daemon-plugin wire protocol before scene tools.
   - Validate required fields for `hello`, `tool_invoke`, and `tool_result` messages.
   - Handle unknown message types explicitly with safe logging and no crashes.
   - Keep ping/pong behavior stable as the baseline connectivity check.

@@ -94,6 +94,13 @@ func (s *wsServer) InvokeTool(ctx context.Context, tool string, args map[string]
 		Tool: tool,
 		Args: args,
 	}
+	if msg.Args == nil {
+		msg.Args = map[string]any{}
+	}
+	if err := validateToolInvokeMessage(msg); err != nil {
+		s.removePending(requestID)
+		return toolResultMessage{}, newBrokerError(BrokerErrorCodeValidation, "invalid tool invoke payload", err, requestID)
+	}
 
 	if err := s.writeJSON(conn, msg); err != nil {
 		s.removePending(requestID)
@@ -160,12 +167,12 @@ func (s *wsServer) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for {
-		messageType, payload, err := conn.ReadMessage()
+		frameType, payload, err := conn.ReadMessage()
 		if err != nil {
 			log.Printf("ws read ended: %v", err)
 			return
 		}
-		if messageType != websocket.TextMessage {
+		if frameType != websocket.TextMessage {
 			continue
 		}
 
@@ -175,10 +182,16 @@ func (s *wsServer) handleWS(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		switch msgType.Type {
+		messageType := strings.TrimSpace(msgType.Type)
+		switch messageType {
 		case "hello":
 			var msg wsMessage
 			if err := json.Unmarshal(payload, &msg); err != nil {
+				log.Printf("ws invalid hello json: %v", err)
+				continue
+			}
+			if err := validateHelloMessage(msg); err != nil {
+				log.Printf("ws invalid hello message: %v", err)
 				continue
 			}
 			s.state.SetConnected(msg.Project, normalizeTools(msg.Tools))
@@ -192,9 +205,77 @@ func (s *wsServer) handleWS(w http.ResponseWriter, r *http.Request) {
 				log.Printf("ws invalid tool_result json: %v", err)
 				continue
 			}
+			if err := validateToolResultMessage(msg); err != nil {
+				log.Printf("ws invalid tool_result message: %v", err)
+				continue
+			}
 			s.completePending(msg)
+		default:
+			log.Printf("ws unknown message type: %q", messageType)
 		}
 	}
+}
+
+func validateHelloMessage(msg wsMessage) error {
+	if strings.TrimSpace(msg.Type) != "hello" {
+		return fmt.Errorf("type must be hello")
+	}
+
+	for i, tool := range msg.Tools {
+		if strings.TrimSpace(tool) == "" {
+			return fmt.Errorf("tools[%d] must be non-empty", i)
+		}
+	}
+
+	return nil
+}
+
+func validateToolInvokeMessage(msg toolInvokeMessage) error {
+	if strings.TrimSpace(msg.Type) != "tool_invoke" {
+		return fmt.Errorf("type must be tool_invoke")
+	}
+	if strings.TrimSpace(msg.ID) == "" {
+		return fmt.Errorf("id is required")
+	}
+	if strings.TrimSpace(msg.Tool) == "" {
+		return fmt.Errorf("tool is required")
+	}
+	if msg.Args == nil {
+		return fmt.Errorf("args is required")
+	}
+
+	return nil
+}
+
+func validateToolResultMessage(msg toolResultMessage) error {
+	if strings.TrimSpace(msg.Type) != "tool_result" {
+		return fmt.Errorf("type must be tool_result")
+	}
+	if strings.TrimSpace(msg.ID) == "" {
+		return fmt.Errorf("id is required")
+	}
+
+	hasResult := msg.Result != nil
+	hasError := strings.TrimSpace(msg.Error) != ""
+
+	if msg.Ok {
+		if !hasResult {
+			return fmt.Errorf("result is required when ok=true")
+		}
+		if hasError {
+			return fmt.Errorf("error must be empty when ok=true")
+		}
+		return nil
+	}
+
+	if !hasError {
+		return fmt.Errorf("error is required when ok=false")
+	}
+	if hasResult {
+		return fmt.Errorf("result must be empty when ok=false")
+	}
+
+	return nil
 }
 
 func normalizeTools(tools []string) []string {
