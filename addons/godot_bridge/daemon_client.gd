@@ -390,15 +390,15 @@ func _maybe_start_daemon() -> void:
 		_owner_token = _generate_owner_token()
 
 	var args := ["daemon", "start", "--owner-token", _owner_token]
-
-	for executable in _daemon_candidates():
+	var candidates := _daemon_candidates()
+	for executable in candidates:
 		var pid := OS.create_process(executable, args, false)
 		if pid != -1:
 			print("godot_bridge: launched daemon via %s (pid=%d)" % [executable, pid])
 			return
 
 	if _connect_attempt_count == 1 or _connect_attempt_count % 5 == 0:
-		push_warning("godot_bridge: could not launch daemon automatically")
+		push_warning("godot_bridge: could not launch daemon automatically; checked %s" % _describe_daemon_candidates(candidates))
 
 
 func _maybe_watchdog_start_daemon() -> void:
@@ -418,7 +418,36 @@ func _daemon_candidates() -> Array[String]:
 	_append_resolved_command_candidate(candidates, "godotctl")
 	_append_existing_command_candidate(candidates, ProjectSettings.globalize_path("res://bin/godotctl.exe"))
 	_append_existing_command_candidate(candidates, ProjectSettings.globalize_path("res://bin/godotctl"))
+	for executable in _common_daemon_install_paths():
+		_append_existing_command_candidate(candidates, executable)
 	return candidates
+
+
+func _common_daemon_install_paths() -> Array[String]:
+	var candidates: Array[String] = []
+	if not OS.has_feature("windows"):
+		var home := OS.get_environment("HOME").strip_edges()
+		if not home.is_empty():
+			candidates.append(home.path_join(".local/bin/godotctl"))
+			candidates.append(home.path_join("bin/godotctl"))
+		return candidates
+
+	var user_profile := OS.get_environment("USERPROFILE").strip_edges()
+	if not user_profile.is_empty():
+		candidates.append(user_profile.path_join(".local/bin/godotctl.exe"))
+		candidates.append(user_profile.path_join("bin/godotctl.exe"))
+
+	var local_app_data := OS.get_environment("LOCALAPPDATA").strip_edges()
+	if not local_app_data.is_empty():
+		candidates.append(local_app_data.path_join("Microsoft/WinGet/Links/godotctl.exe"))
+
+	return candidates
+
+
+func _describe_daemon_candidates(candidates: Array[String]) -> String:
+	if candidates.is_empty():
+		return "<none>"
+	return ", ".join(candidates)
 
 
 func _append_resolved_command_candidate(candidates: Array[String], executable: String) -> void:
@@ -449,6 +478,8 @@ func _resolve_command_from_path(executable: String) -> String:
 
 	for directory in path_env.split(path_separator, false):
 		var trimmed_directory := directory.strip_edges()
+		if trimmed_directory.begins_with("\"") and trimmed_directory.ends_with("\"") and trimmed_directory.length() >= 2:
+			trimmed_directory = trimmed_directory.substr(1, trimmed_directory.length() - 2)
 		if trimmed_directory.is_empty():
 			continue
 
