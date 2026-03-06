@@ -6,8 +6,13 @@ golangci-lint = "latest"
 [env]
 _.file = ".env"
 
+[tasks.package-addon]
+description = "Package addons/godot_bridge into embedded zip"
+run = "go -C cli run ./cmd/packageaddon"
+
 [tasks.build]
 description = "Build CLI into root bin"
+depends = ["package-addon"]
 shell = "bash -lc"
 run = '''set -euo pipefail
 mkdir -p bin
@@ -19,6 +24,7 @@ go -C cli build -o ../bin/godotctl.exe ./cmd/godotctl'''
 
 [tasks.validate]
 description = "Run full Go validation (fmt, test, vet, lint, deadcode)"
+depends = ["package-addon"]
 shell = "bash -lc"
 run = '''set -euo pipefail
 go -C cli fmt ./...
@@ -32,6 +38,7 @@ go -C cli vet ./...
 
 [tasks.cli]
 description = "Run godotctl via go run (pass args after --)"
+depends = ["package-addon"]
 run = "go -C cli run ./cmd/godotctl"
 
 [tasks.launch-editor]

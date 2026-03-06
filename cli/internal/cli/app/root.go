@@ -7,6 +7,7 @@ import (
 	classcmd "github.com/shanepadgett/godotctl/internal/cli/commands/class"
 	daemoncmd "github.com/shanepadgett/godotctl/internal/cli/commands/daemon"
 	filecmd "github.com/shanepadgett/godotctl/internal/cli/commands/file"
+	installbridgecmd "github.com/shanepadgett/godotctl/internal/cli/commands/installbridge"
 	projectcmd "github.com/shanepadgett/godotctl/internal/cli/commands/project"
 	resourcecmd "github.com/shanepadgett/godotctl/internal/cli/commands/resource"
 	runcmd "github.com/shanepadgett/godotctl/internal/cli/commands/run"
@@ -62,6 +63,7 @@ func NewRootCommand(stdout io.Writer, stderr io.Writer) *cobra.Command {
 
 	rootCmd.AddCommand(daemoncmd.New(deps))
 	rootCmd.AddCommand(statuscmd.New(deps))
+	rootCmd.AddCommand(installbridgecmd.New(deps))
 	rootCmd.AddCommand(toolscmd.New(deps))
 	rootCmd.AddCommand(runcmd.New(deps))
 	rootCmd.AddCommand(classcmd.New(deps))

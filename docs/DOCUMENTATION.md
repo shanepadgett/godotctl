@@ -33,6 +33,19 @@ Use project-relative paths for command flags that take a project path (for examp
 - Flags:
   - None.
 
+### `godotctl install-bridge`
+
+- What it does:
+  - Detects the current Godot project root by searching upward for `project.godot`.
+  - Installs the bundled `addons/godot_bridge` addon into that project.
+- Flags:
+  - `--force`: Overwrite an existing `addons/godot_bridge` directory.
+- Notes:
+  - Fails when run outside a Godot project.
+  - Requires `--force` when the addon directory already exists.
+- Example:
+  - `godotctl install-bridge --force`
+
 ### `godotctl tools list`
 
 - What it does:

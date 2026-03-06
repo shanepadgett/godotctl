@@ -23,7 +23,17 @@ Build the CLI binary:
 mise run build
 ```
 
-Copy `addons/godot_bridge/` into your Godot project.
+From a shell opened anywhere inside your Godot project, install the bundled addon:
+
+```bash
+godotctl install-bridge
+```
+
+If `addons/godot_bridge` already exists, rerun with `--force` to overwrite:
+
+```bash
+godotctl install-bridge --force
+```
 
 Open the project in Godot and enable the plugin in `Project Settings -> Plugins`.
 
