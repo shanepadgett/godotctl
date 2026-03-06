@@ -141,12 +141,12 @@ This roadmap intentionally focuses on platform capabilities, not genre templates
 
 ## Milestone 4 - Runtime Control and Observation Loop
 
-- [ ] Add `run start`, `run stop`, `run status`.
-- [ ] Add `run logs` with filter/follow options and stable record shape.
-- [ ] Add `run screenshot` capture for artifact-based review.
-- [ ] Add runtime tree/property inspection commands.
-- [ ] Add runtime input injection commands for scripted scenarios.
-- [ ] Add optional deterministic stepping (`run step`) for reproducible smoke runs.
+- [x] Add `run start`, `run stop`, `run status`.
+- [x] Add `run logs` with filter/follow options and stable record shape.
+- [x] Add `run screenshot` capture for artifact-based review.
+- [x] Add runtime tree/property inspection commands.
+- [x] Add runtime input injection commands for scripted scenarios.
+- [x] Add optional deterministic stepping (`run step`) for reproducible smoke runs.
 
 ## Milestone 5 - Validation and Scenario Execution
 
