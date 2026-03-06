@@ -57,6 +57,104 @@ Use project-relative paths for command flags that take a project path (for examp
 - Example:
   - `godotctl tools describe --tool scene.create --json`
 
+### `godotctl run start`
+
+- What it does:
+  - Starts project runtime in the editor, optionally with one scene override.
+- Notes:
+  - Runtime bridge inspection/input commands require `res://addons/godot_bridge/runtime_bridge.gd` to be loaded by the running game (for example as an autoload).
+- Flags:
+  - `--scene <path>`: Optional project-relative scene path to run.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run stop`
+
+- What it does:
+  - Stops project runtime in the editor.
+- Flags:
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run status`
+
+- What it does:
+  - Returns stable runtime status fields from the editor runtime bridge.
+- Flags:
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run logs`
+
+- What it does:
+  - Lists captured runtime/editor log rows with optional cursor/filter/follow controls.
+- Flags:
+  - `--cursor <int>`: Return logs with cursor greater than this value.
+  - `--max <int>`: Max returned log rows (`0` means no limit, default `200`).
+  - `--level <string>`: Optional exact lowercase log level filter.
+  - `--contains <string>`: Optional log message substring filter.
+  - `--follow`: Enable polling window behavior for incremental log streaming.
+  - `--follow-ms <int>`: Polling window in milliseconds when `--follow` is enabled.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run tree`
+
+- What it does:
+  - Lists runtime tree snapshot nodes in deterministic order.
+- Notes:
+  - Returns `EDITOR_STATE` when the runtime bridge is not attached.
+- Flags:
+  - `--max <int>`: Max returned node rows (`0` means no limit, default `200`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run prop get`
+
+- What it does:
+  - Returns one runtime node property value from the latest snapshot.
+- Flags:
+  - `--path <NodePath>`: Runtime node path.
+  - `--prop <Property>`: Runtime property name.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run prop list`
+
+- What it does:
+  - Lists runtime node properties from the latest snapshot.
+- Flags:
+  - `--path <NodePath>`: Runtime node path.
+  - `--max <int>`: Max returned property rows (`0` means no limit, default `200`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run input event`
+
+- What it does:
+  - Dispatches one runtime input event payload object.
+- Flags:
+  - `--event <json>`: Runtime input event JSON object payload.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run input action press`
+
+- What it does:
+  - Dispatches one runtime input action press.
+- Flags:
+  - `--action <name>`: Runtime input action name.
+  - `--strength <float>`: Optional action strength (default `1.0`).
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run input action release`
+
+- What it does:
+  - Dispatches one runtime input action release.
+- Flags:
+  - `--action <name>`: Runtime input action name.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
+### `godotctl run step`
+
+- What it does:
+  - Dispatches one deterministic runtime step command.
+- Flags:
+  - `--frames <int>`: Number of frames to step.
+  - `--timeout-ms <int>`: Tool request timeout override in milliseconds.
+
 ### `godotctl class describe`
 
 - What it does:

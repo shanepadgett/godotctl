@@ -54,6 +54,17 @@ const RESOURCE_GET_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resou
 const RESOURCE_SET_PROP_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resource/set_prop_tool.gd")
 const RESOURCE_LIST_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resource/list_tool.gd")
 const RESOURCE_REFS_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/resource/refs_tool.gd")
+const RUN_START_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/start_tool.gd")
+const RUN_STOP_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/stop_tool.gd")
+const RUN_STATUS_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/status_tool.gd")
+const RUN_LOGS_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/logs_tool.gd")
+const RUN_TREE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/tree_tool.gd")
+const RUN_PROP_GET_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/prop_get_tool.gd")
+const RUN_PROP_LIST_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/prop_list_tool.gd")
+const RUN_INPUT_EVENT_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/input_event_tool.gd")
+const RUN_INPUT_ACTION_PRESS_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/input_action_press_tool.gd")
+const RUN_INPUT_ACTION_RELEASE_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/input_action_release_tool.gd")
+const RUN_STEP_TOOL_SCRIPT := preload("res://addons/godot_bridge/tools/run/step_tool.gd")
 
 
 func instantiate_tools() -> Array[RefCounted]:
@@ -111,4 +122,15 @@ func instantiate_tools() -> Array[RefCounted]:
 		RESOURCE_SET_PROP_TOOL_SCRIPT.new(),
 		RESOURCE_LIST_TOOL_SCRIPT.new(),
 		RESOURCE_REFS_TOOL_SCRIPT.new(),
+		RUN_START_TOOL_SCRIPT.new(),
+		RUN_STOP_TOOL_SCRIPT.new(),
+		RUN_STATUS_TOOL_SCRIPT.new(),
+		RUN_LOGS_TOOL_SCRIPT.new(),
+		RUN_TREE_TOOL_SCRIPT.new(),
+		RUN_PROP_GET_TOOL_SCRIPT.new(),
+		RUN_PROP_LIST_TOOL_SCRIPT.new(),
+		RUN_INPUT_EVENT_TOOL_SCRIPT.new(),
+		RUN_INPUT_ACTION_PRESS_TOOL_SCRIPT.new(),
+		RUN_INPUT_ACTION_RELEASE_TOOL_SCRIPT.new(),
+		RUN_STEP_TOOL_SCRIPT.new(),
 	]

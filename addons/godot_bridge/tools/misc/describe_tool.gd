@@ -588,6 +588,198 @@ func _build_definitions() -> Array:
 			_error_schema(["INVALID_ARGS", "NOT_FOUND", "TYPE_MISMATCH", "IO_ERROR", "INTERNAL"])
 		),
 		_tool_definition(
+			"run.input_action_press",
+			"Press one runtime input action",
+			_args_schema(["action"], {
+				"action": _schema("string", "Input action name"),
+				"strength": _schema("float", "Optional action strength (defaults to 1.0)"),
+			}),
+			_result_schema({
+				"action": _schema("string", "Input action name"),
+				"strength": _schema("float", "Applied action strength"),
+				"dispatched": _schema("bool", "Whether command dispatch succeeded"),
+			}),
+			_error_schema(["INVALID_ARGS", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.input_action_release",
+			"Release one runtime input action",
+			_args_schema(["action"], {
+				"action": _schema("string", "Input action name"),
+			}),
+			_result_schema({
+				"action": _schema("string", "Input action name"),
+				"dispatched": _schema("bool", "Whether command dispatch succeeded"),
+			}),
+			_error_schema(["INVALID_ARGS", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.input_event",
+			"Dispatch one runtime input event payload",
+			_args_schema(["event"], {
+				"event": _schema("object", "Runtime input event payload object"),
+			}),
+			_result_schema({
+				"dispatched": _schema("bool", "Whether command dispatch succeeded"),
+			}),
+			_error_schema(["INVALID_ARGS", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.logs",
+			"List captured runtime/editor logs",
+			_args_schema([], {
+				"cursor": _schema("int", "Return records with cursor greater than this value (defaults to 0)"),
+				"max": _schema("int", "Max returned log rows (0 means no limit, default 200)"),
+				"level": _schema("string", "Optional exact lowercase level filter"),
+				"contains": _schema("string", "Optional substring filter"),
+				"follow_window_msec": _schema("int", "Optional polling window in milliseconds (default 0, max 5000)"),
+			}),
+			_result_schema({
+				"cursor": _schema("int", "Applied cursor"),
+				"next_cursor": _schema("int", "Cursor of the last returned row"),
+				"max": _schema("int", "Requested max rows"),
+				"level": _schema("string", "Applied level filter"),
+				"contains": _schema("string", "Applied contains filter"),
+				"follow_window_msec": _schema("int", "Applied follow window"),
+				"logs": _schema("array<object>", "Ordered log rows"),
+				"count": _schema("int", "Matching log count"),
+				"returned_count": _schema("int", "Returned log count"),
+				"truncated": _schema("bool", "Whether rows were truncated by max"),
+			}),
+			_error_schema(["INVALID_ARGS", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.prop_get",
+			"Get one runtime property from snapshot",
+			_args_schema(["node_path", "property"], {
+				"node_path": _schema("string", "Runtime node path"),
+				"property": _schema("string", "Property name"),
+			}),
+			_result_schema({
+				"node_path": _schema("string", "Runtime node path"),
+				"property": _schema("string", "Property name"),
+				"value": _schema("any", "Serialized property value payload"),
+				"value_text": _schema("string", "Property value text form"),
+				"value_type": _schema("string", "Property value variant type"),
+				"captured_at_msec": _schema("int", "Snapshot capture timestamp"),
+				"frame": _schema("int", "Snapshot frame marker"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.prop_list",
+			"List runtime properties for one node",
+			_args_schema(["node_path"], {
+				"node_path": _schema("string", "Runtime node path"),
+				"max": _schema("int", "Max returned properties (0 means no limit, default 200)"),
+			}),
+			_result_schema({
+				"node_path": _schema("string", "Runtime node path"),
+				"max": _schema("int", "Requested max properties"),
+				"properties": _schema("array<object>", "Sorted property rows"),
+				"count": _schema("int", "Property count"),
+				"returned_count": _schema("int", "Returned property row count"),
+				"truncated": _schema("bool", "Whether rows were truncated by max"),
+				"captured_at_msec": _schema("int", "Snapshot capture timestamp"),
+				"frame": _schema("int", "Snapshot frame marker"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.start",
+			"Start project runtime in editor",
+			_args_schema([], {
+				"scene_path": _schema("string", "Optional scene path to run instead of main scene"),
+			}),
+			_result_schema({
+				"state": _schema("string", "Runtime state (`stopped`, `starting`, or `running`)"),
+				"running": _schema("bool", "Whether runtime is currently active"),
+				"changed": _schema("bool", "Whether a new start was issued"),
+				"requested_scene_path": _schema("string", "Requested scene path when provided"),
+				"bridge_attached": _schema("bool", "Whether runtime bridge is attached"),
+				"bridge_session_id": _schema("int", "Debugger session id for runtime bridge"),
+				"bridge_version": _schema("string", "Runtime bridge protocol version"),
+				"debug_session_count": _schema("int", "Current debugger session count"),
+				"log_count": _schema("int", "Buffered log row count"),
+				"last_log_cursor": _schema("int", "Latest log cursor"),
+				"snapshot_captured_at_msec": _schema("int", "Latest runtime snapshot timestamp"),
+				"snapshot_frame": _schema("int", "Latest runtime snapshot frame marker"),
+				"editor_available": _schema("bool", "Whether editor interface was available"),
+			}),
+			_error_schema(["INVALID_ARGS", "NOT_FOUND", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.status",
+			"Read stable runtime status fields",
+			_args_schema([], {}),
+			_result_schema({
+				"state": _schema("string", "Runtime state (`stopped`, `starting`, or `running`)"),
+				"running": _schema("bool", "Whether runtime is currently active"),
+				"changed": _schema("bool", "Always false for status"),
+				"requested_scene_path": _schema("string", "Requested scene path when tracked"),
+				"bridge_attached": _schema("bool", "Whether runtime bridge is attached"),
+				"bridge_session_id": _schema("int", "Debugger session id for runtime bridge"),
+				"bridge_version": _schema("string", "Runtime bridge protocol version"),
+				"debug_session_count": _schema("int", "Current debugger session count"),
+				"log_count": _schema("int", "Buffered log row count"),
+				"last_log_cursor": _schema("int", "Latest log cursor"),
+				"snapshot_captured_at_msec": _schema("int", "Latest runtime snapshot timestamp"),
+				"snapshot_frame": _schema("int", "Latest runtime snapshot frame marker"),
+				"editor_available": _schema("bool", "Whether editor interface was available"),
+			}),
+			_error_schema(["INTERNAL"])
+		),
+		_tool_definition(
+			"run.step",
+			"Dispatch runtime deterministic step command",
+			_args_schema([], {
+				"frames": _schema("int", "Number of frames to step (default 1, max 120)"),
+			}),
+			_result_schema({
+				"frames": _schema("int", "Requested step frame count"),
+				"dispatched": _schema("bool", "Whether command dispatch succeeded"),
+			}),
+			_error_schema(["INVALID_ARGS", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.stop",
+			"Stop project runtime in editor",
+			_args_schema([], {}),
+			_result_schema({
+				"state": _schema("string", "Runtime state (`stopped`, `starting`, or `running`)"),
+				"running": _schema("bool", "Whether runtime is currently active"),
+				"changed": _schema("bool", "Whether a stop was issued"),
+				"requested_scene_path": _schema("string", "Requested scene path when tracked"),
+				"bridge_attached": _schema("bool", "Whether runtime bridge is attached"),
+				"bridge_session_id": _schema("int", "Debugger session id for runtime bridge"),
+				"bridge_version": _schema("string", "Runtime bridge protocol version"),
+				"debug_session_count": _schema("int", "Current debugger session count"),
+				"log_count": _schema("int", "Buffered log row count"),
+				"last_log_cursor": _schema("int", "Latest log cursor"),
+				"snapshot_captured_at_msec": _schema("int", "Latest runtime snapshot timestamp"),
+				"snapshot_frame": _schema("int", "Latest runtime snapshot frame marker"),
+				"editor_available": _schema("bool", "Whether editor interface was available"),
+			}),
+			_error_schema(["EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
+			"run.tree",
+			"List runtime tree snapshot nodes",
+			_args_schema([], {
+				"max": _schema("int", "Max returned nodes (0 means no limit, default 200)"),
+			}),
+			_result_schema({
+				"max": _schema("int", "Requested max nodes"),
+				"nodes": _schema("array<object>", "Sorted runtime node rows"),
+				"count": _schema("int", "Node count"),
+				"returned_count": _schema("int", "Returned node row count"),
+				"truncated": _schema("bool", "Whether rows were truncated by max"),
+				"captured_at_msec": _schema("int", "Snapshot capture timestamp"),
+				"frame": _schema("int", "Snapshot frame marker"),
+			}),
+			_error_schema(["INVALID_ARGS", "EDITOR_STATE", "INTERNAL"])
+		),
+		_tool_definition(
 			"scene.add_node",
 			"Add a child node and save scene",
 			_args_schema(["scene_path", "node_name", "node_type", "parent_path"], {

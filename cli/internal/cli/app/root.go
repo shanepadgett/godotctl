@@ -9,6 +9,7 @@ import (
 	filecmd "github.com/shanepadgett/godotctl/internal/cli/commands/file"
 	projectcmd "github.com/shanepadgett/godotctl/internal/cli/commands/project"
 	resourcecmd "github.com/shanepadgett/godotctl/internal/cli/commands/resource"
+	runcmd "github.com/shanepadgett/godotctl/internal/cli/commands/run"
 	scenecmd "github.com/shanepadgett/godotctl/internal/cli/commands/scene"
 	scriptcmd "github.com/shanepadgett/godotctl/internal/cli/commands/script"
 	"github.com/shanepadgett/godotctl/internal/cli/commands/shared"
@@ -62,6 +63,7 @@ func NewRootCommand(stdout io.Writer, stderr io.Writer) *cobra.Command {
 	rootCmd.AddCommand(daemoncmd.New(deps))
 	rootCmd.AddCommand(statuscmd.New(deps))
 	rootCmd.AddCommand(toolscmd.New(deps))
+	rootCmd.AddCommand(runcmd.New(deps))
 	rootCmd.AddCommand(classcmd.New(deps))
 	rootCmd.AddCommand(scenecmd.New(deps))
 	rootCmd.AddCommand(scriptcmd.New(deps))

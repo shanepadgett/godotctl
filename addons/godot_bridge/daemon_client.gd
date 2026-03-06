@@ -25,6 +25,7 @@ var _owns_daemon := false
 var _connect_started_at_msec := 0
 var _auto_start_attempted_this_connect := false
 var _tool_executor: RefCounted = TOOL_EXECUTOR_SCRIPT.new()
+var _runtime_bridge_service: RefCounted = null
 
 
 func start(auto_start_enabled: bool = true) -> void:
@@ -34,6 +35,8 @@ func start(auto_start_enabled: bool = true) -> void:
 		_tool_executor = TOOL_EXECUTOR_SCRIPT.new()
 	if _tool_executor.has_method("set_host"):
 		_tool_executor.call("set_host", self)
+	if _runtime_bridge_service != null and _runtime_bridge_service.has_method("set_host"):
+		_runtime_bridge_service.call("set_host", self)
 	print("godot_bridge: daemon client starting")
 	set_process(true)
 	_connect()
@@ -52,6 +55,18 @@ func stop() -> void:
 	_owns_daemon = false
 	_connect_started_at_msec = 0
 	_auto_start_attempted_this_connect = false
+	if _runtime_bridge_service != null and _runtime_bridge_service.has_method("set_running_hint"):
+		_runtime_bridge_service.call("set_running_hint", false)
+
+
+func set_runtime_bridge_service(service: RefCounted) -> void:
+	_runtime_bridge_service = service
+	if _runtime_bridge_service != null and _runtime_bridge_service.has_method("set_host"):
+		_runtime_bridge_service.call("set_host", self)
+
+
+func get_runtime_bridge_service() -> Variant:
+	return _runtime_bridge_service
 
 
 func _process(_delta: float) -> void:
@@ -112,7 +127,13 @@ func _send_hello() -> void:
 	if not validation_error.is_empty():
 		push_warning("godot_bridge: invalid hello payload: %s" % validation_error)
 		return
-	_socket.send_text(JSON.stringify(payload))
+	var send_err := _socket.send_text(JSON.stringify(payload))
+	if send_err != OK:
+		if _socket.get_ready_state() != WebSocketPeer.STATE_CLOSED:
+			_socket.close()
+		_hello_sent = false
+		_on_connect_failed("hello send failed: %s" % error_string(send_err))
+		return
 	_hello_sent = true
 	_connecting = false
 
