@@ -16,12 +16,37 @@ function Get-LatestTag {
 }
 
 function Get-Arch {
-    $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
-    switch ($arch) {
-        "X64" { return "amd64" }
-        "Arm64" { return "arm64" }
-        default { throw "unsupported architecture: $arch" }
+    $candidates = @()
+
+    try {
+        $runtimeArch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+        if ($null -ne $runtimeArch) {
+            $candidates += [string]$runtimeArch
+        }
     }
+    catch {
+    }
+
+    if ($env:PROCESSOR_ARCHITEW6432) {
+        $candidates += $env:PROCESSOR_ARCHITEW6432
+    }
+    if ($env:PROCESSOR_ARCHITECTURE) {
+        $candidates += $env:PROCESSOR_ARCHITECTURE
+    }
+
+    foreach ($candidate in $candidates) {
+        $value = $candidate.Trim().ToUpperInvariant()
+        switch -Regex ($value) {
+            "^(ARM64|AARCH64)$" { return "arm64" }
+            "^(AMD64|X64)$" { return "amd64" }
+        }
+    }
+
+    if ([Environment]::Is64BitOperatingSystem) {
+        return "amd64"
+    }
+
+    throw "unsupported architecture: $($candidates -join ', ')"
 }
 
 if ($Version -eq "latest") {
