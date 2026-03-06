@@ -16,6 +16,7 @@ import (
 	"github.com/shanepadgett/godotctl/internal/cli/commands/shared"
 	statuscmd "github.com/shanepadgett/godotctl/internal/cli/commands/status"
 	toolscmd "github.com/shanepadgett/godotctl/internal/cli/commands/tools"
+	versioncmd "github.com/shanepadgett/godotctl/internal/cli/commands/version"
 	"github.com/shanepadgett/godotctl/internal/cli/output"
 	"github.com/spf13/cobra"
 )
@@ -33,16 +34,33 @@ type App struct {
 	stderr    io.Writer
 }
 
-func NewRootCommand(stdout io.Writer, stderr io.Writer) *cobra.Command {
+type BuildInfo struct {
+	Version string
+	Commit  string
+	Date    string
+}
+
+func NewRootCommand(stdout io.Writer, stderr io.Writer, build BuildInfo) *cobra.Command {
 	a := &App{
 		client: client.New(defaultHTTPAddr),
 		stdout: stdout,
 		stderr: stderr,
 	}
 
+	if build.Version == "" {
+		build.Version = "dev"
+	}
+	if build.Commit == "" {
+		build.Commit = "none"
+	}
+	if build.Date == "" {
+		build.Date = "unknown"
+	}
+
 	rootCmd := &cobra.Command{
 		Use:           "godotctl",
 		Short:         "CLI and daemon for the Godot bridge plugin",
+		Version:       build.Version,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRun: func(_ *cobra.Command, _ []string) {
@@ -72,6 +90,7 @@ func NewRootCommand(stdout io.Writer, stderr io.Writer) *cobra.Command {
 	rootCmd.AddCommand(projectcmd.New(deps))
 	rootCmd.AddCommand(resourcecmd.New(deps))
 	rootCmd.AddCommand(filecmd.New(deps))
+	rootCmd.AddCommand(versioncmd.New(deps, build.Version, build.Commit, build.Date))
 
 	return rootCmd
 }

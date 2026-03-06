@@ -4,7 +4,7 @@
 
 ## Requirements
 
-- Windows-first workflow (cross-platform shell commands still work in Bash)
+- Windows, macOS, or Linux
 - Go 1.25.x (managed via `mise` in this repo)
 - Godot 4.6 / 4.6.1
 
@@ -13,14 +13,20 @@
 - Repo root is the Godot project (`project.godot`) used for addon development and testing.
 - Plugin source of truth: `addons/godot_bridge/`.
 - CLI Go module: `cli/` (`cli/go.mod`).
-- Built CLI binary: `bin/godotctl.exe`.
+- Built CLI binary for local development: `bin/godotctl.exe`.
 
 ## Install (User)
 
-Build the CLI binary:
+Install from latest GitHub release (bash):
 
 ```bash
-mise run build
+curl -fsSL https://raw.githubusercontent.com/shanepadgett/godotctl/main/scripts/install.sh | bash
+```
+
+Install from latest GitHub release (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/shanepadgett/godotctl/main/scripts/install.ps1 | iex
 ```
 
 From a shell opened anywhere inside your Godot project, install the bundled addon:
@@ -38,23 +44,42 @@ godotctl install-bridge --force
 Open the project in Godot and enable the plugin in `Project Settings -> Plugins`.
 
 The plugin will try to connect to a local daemon and can auto-start it if available.
-Auto-start resolves `godotctl` from PATH first, then falls back to `res://bin/godotctl.exe`.
+Auto-start resolves `godotctl` from PATH first, then falls back to `res://bin/godotctl.exe` and `res://bin/godotctl`.
+
+If you prefer building from source instead of installing from release artifacts:
+
+```bash
+mise run build
+```
 
 ## Get Running
 
 Start daemon manually if needed:
 
 ```bash
-bin/godotctl.exe daemon start
+godotctl daemon start
 ```
 
 Then in another shell:
 
 ```bash
-bin/godotctl.exe status
-bin/godotctl.exe tools list
-bin/godotctl.exe tools ping
+godotctl status
+godotctl tools list
+godotctl tools ping
 ```
+
+## Release Process
+
+- Manual trigger: run `.github/workflows/release.yml` with GitHub Actions `workflow_dispatch`.
+- Versioning rules:
+  - `major`: any commit with `!` in the conventional commit header or a `BREAKING CHANGE:` footer.
+  - `minor`: any commit with `feat:`.
+  - `patch`: everything else.
+- First-tag baseline when no existing release tags: `0.0.0` (default bump then applies).
+- Artifacts are published via GoReleaser for:
+  - `windows/amd64`, `windows/arm64`
+  - `linux/amd64`, `linux/arm64`
+  - `darwin/amd64`, `darwin/arm64`
 
 ## Development
 

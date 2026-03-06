@@ -33,6 +33,15 @@ Use project-relative paths for command flags that take a project path (for examp
 - Flags:
   - None.
 
+### `godotctl version`
+
+- What it does:
+  - Shows CLI build version, commit, and build date metadata.
+- Flags:
+  - None.
+- Example:
+  - `godotctl version --json`
+
 ### `godotctl install-bridge`
 
 - What it does:

@@ -71,3 +71,7 @@ if [ ! -f "$exe" ]; then
 fi
 "$exe" --editor --path . >/dev/null 2>&1 &
 printf "launched Godot in background (pid=%s)\n" "$!"'''
+
+[tasks.release-next-version]
+description = "Compute next semantic version from commits"
+run = "bash scripts/release/next_version.sh --initial-version 0.0.0"

@@ -1,0 +1,123 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only compute version and run snapshot build"
+        required: true
+        default: false
+        type: boolean
+      initial_version:
+        description: "Initial semver when no release tag exists"
+        required: true
+        default: "0.0.0"
+        type: string
+      forced_version:
+        description: "Optional explicit version (X.Y.Z) to bypass commit-based bump"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: cli/go.mod
+
+      - name: Verify CLI tests
+        run: go -C cli test ./...
+
+      - name: Compute next version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          forced="${{ inputs.forced_version }}"
+          if [ -n "$forced" ]; then
+            if ! [[ "$forced" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "forced_version must be X.Y.Z" >&2
+              exit 1
+            fi
+            bump="forced"
+            base="${forced}"
+            previous_tag=""
+            commits="0"
+            next_version="$forced"
+            next_tag="v$forced"
+          else
+            map_output="$(bash scripts/release/next_version.sh --initial-version "${{ inputs.initial_version }}")"
+            echo "$map_output"
+            while IFS='=' read -r key value; do
+              case "$key" in
+                PREVIOUS_TAG) previous_tag="$value" ;;
+                BASE_VERSION) base="$value" ;;
+                BUMP) bump="$value" ;;
+                COMMITS) commits="$value" ;;
+                NEXT_VERSION) next_version="$value" ;;
+                NEXT_TAG) next_tag="$value" ;;
+              esac
+            done <<< "$map_output"
+          fi
+
+          if git rev-parse -q --verify "refs/tags/$next_tag" >/dev/null; then
+            echo "tag already exists: $next_tag" >&2
+            exit 1
+          fi
+
+          echo "previous_tag=$previous_tag" >> "$GITHUB_OUTPUT"
+          echo "base_version=$base" >> "$GITHUB_OUTPUT"
+          echo "bump=$bump" >> "$GITHUB_OUTPUT"
+          echo "commits=$commits" >> "$GITHUB_OUTPUT"
+          echo "next_version=$next_version" >> "$GITHUB_OUTPUT"
+          echo "next_tag=$next_tag" >> "$GITHUB_OUTPUT"
+
+      - name: Print release plan
+        run: |
+          echo "previous_tag=${{ steps.version.outputs.previous_tag }}"
+          echo "base_version=${{ steps.version.outputs.base_version }}"
+          echo "bump=${{ steps.version.outputs.bump }}"
+          echo "commits=${{ steps.version.outputs.commits }}"
+          echo "next_version=${{ steps.version.outputs.next_version }}"
+          echo "next_tag=${{ steps.version.outputs.next_tag }}"
+
+      - name: Set up GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: latest
+          install-only: true
+
+      - name: Snapshot build (dry run)
+        if: ${{ inputs.dry_run }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: goreleaser build --clean --snapshot --config .goreleaser.yaml
+
+      - name: Create and push tag
+        if: ${{ !inputs.dry_run }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ steps.version.outputs.next_tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "Release $tag"
+          git push origin "$tag"
+
+      - name: Publish release
+        if: ${{ !inputs.dry_run }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: goreleaser release --clean --config .goreleaser.yaml
