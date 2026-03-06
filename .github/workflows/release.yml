@@ -36,6 +36,9 @@ jobs:
         with:
           go-version-file: cli/go.mod
 
+      - name: Package embedded addon bundle
+        run: go -C cli run ./cmd/packageaddon
+
       - name: Verify CLI tests
         run: go -C cli test ./...
 
